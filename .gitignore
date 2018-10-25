@@ -1,0 +1,11 @@
+# pycharm
+.idea
+
+# python temp files
+__pycache__
+.eggs/
+dist/
+riscv_model.egg-info/
+
+# Auto-generated
+riscvmodel/version.py
