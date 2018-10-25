@@ -23,10 +23,10 @@ project = 'RISC-V Model'
 copyright = '2018, Stefan Wallentowitz'
 author = 'Stefan Wallentowitz'
 
-# The short X.Y version
-version = ''
-# The full version, including alpha/beta/rc tags
-release = ''
+from pkg_resources import get_distribution
+release = get_distribution('riscv-model').version
+# for example take major/minor
+version = '.'.join(release.split('.')[:2])
 
 
 # -- General configuration ---------------------------------------------------
