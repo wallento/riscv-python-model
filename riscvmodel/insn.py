@@ -177,17 +177,17 @@ class InstructionBType(Instruction):
         self.imm = (imm12 << 12) | (imm11 << 11) | (imm5to10 << 5) | (imm1to4 << 1)
 
     def __str__(self):
-        return "{} x{}, x{}, 0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, self.imm >> 1)
+        return "{} x{}, x{}, .+0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
 
 
 class InstructionBSType(InstructionBType):
     def __str__(self):
         sign = (self.imm >> 12) == 1
-        imm = (self.imm >> 1) & 0x7ff
+        imm = (self.imm) & 0xfff
         if sign:
-            return "{} x{}, x{}, -0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
+            return "{} x{}, x{}, .-0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
         else:
-            return "{} x{}, x{}, 0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
+            return "{} x{}, x{}, .+0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
 
 class InstructionUType(Instruction):
     def __init__(self, rd: int = None, imm: int = None):
