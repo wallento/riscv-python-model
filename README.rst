@@ -55,8 +55,13 @@ You can disassemble a machine code to the assembly code on instruction level:
 
 ::
 
-    riscv-machinsn-decode 0x007938b3
-    riscv-machinsn-decode 0xc9650993
+    riscv-machinsn-decode hexstring 0x007938b3 0xc9650993
+
+You can also directly disassemble object files:
+
+::
+
+    riscv-machinsn-decode objfile file.o
 
 
 Automatically test random assembler sequences
