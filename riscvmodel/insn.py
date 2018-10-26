@@ -154,6 +154,7 @@ class InstructionSType(Instruction):
         else:
             return "{} x{}, 0x{:03x}(x{})".format(self._mnemonic, self.rs1, imm, self.rs2)
 
+
 class InstructionBType(Instruction):
     def __init__(self, rs1: int = None, rs2: int = None, imm: int = None):
         super(InstructionBType, self).__init__()
@@ -176,12 +177,17 @@ class InstructionBType(Instruction):
         self.imm = (imm12 << 12) | (imm11 << 11) | (imm5to10 << 5) | (imm1to4 << 1)
 
     def __str__(self):
+        return "{} x{}, x{}, 0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, self.imm >> 1)
+
+
+class InstructionBSType(InstructionBType):
+    def __str__(self):
         sign = (self.imm >> 12) == 1
         imm = (self.imm >> 1) & 0x7ff
         if sign:
-            return "{} x{}, x{}, 0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
-        else:
             return "{} x{}, x{}, -0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
+        else:
+            return "{} x{}, x{}, 0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
 
 class InstructionUType(Instruction):
     def __init__(self, rd: int = None, imm: int = None):

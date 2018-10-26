@@ -25,28 +25,28 @@ class InstructionJALR(InstructionIType):
 
 
 @isa("beq", 0x63, 0)
-class InstructionBEQ(InstructionBType):
+class InstructionBEQ(InstructionBSType):
     def execute(self, model: Model):
         if model.intreg[self.rs1] == model.intreg[self.rs2]:
             model.pc = model.pc + self.imm
 
 
 @isa("bne", 0x63, 1)
-class InstructionBNE(InstructionBType):
+class InstructionBNE(InstructionBSType):
     def execute(self, model: Model):
         if model.intreg[self.rs1] != model.intreg[self.rs2]:
             model.pc = model.pc + self.imm
 
 
 @isa("blt", 0x63, 4)
-class InstructionBLT(InstructionBType):
+class InstructionBLT(InstructionBSType):
     def execute(self, model: Model):
         if model.intreg[self.rs1] < model.intreg[self.rs2]:
             model.pc = model.pc + self.imm
 
 
 @isa("bge", 0x63, 5)
-class InstructionBGE(InstructionBType):
+class InstructionBGE(InstructionBSType):
     def execute(self, model: Model):
         if model.intreg[self.rs1] >= model.intreg[self.rs2]:
             model.pc = model.pc + self.imm
