@@ -4,6 +4,11 @@ from abc import ABCMeta, abstractmethod
 from .variant import Variant
 from .model import Model
 
+def twos_complement(value: int, bits: int):
+	mask = 1 << (bits - 1)
+	return -(value & mask) + (value & ~mask)
+
+
 class Instruction(metaclass=ABCMeta):
     """
     Base class for instructions
@@ -181,13 +186,27 @@ class InstructionBType(Instruction):
 
 
 class InstructionBSType(InstructionBType):
+    def randomize(self, variant: Variant):
+        self.rs1 = randrange(0, variant.intregs)
+        self.rs2 = randrange(0, variant.intregs)
+        self.imm = randrange(- (1<<12), (1 << 12) - 1) << 1
+
+    def decode(self, machinecode: int):
+        self.rs1 = (machinecode >> 15) & 0x1f
+        self.rs2 = (machinecode >> 20) & 0x1f
+        imm11 = (machinecode >> 7) & 0x1
+        imm1to4 = (machinecode >> 8) & 0xf
+        imm5to10 = (machinecode >> 25) & 0x3f
+        imm12 = (machinecode >> 31) & 0x1
+        self.imm = (imm12 << 12) | (imm11 << 11) | (imm5to10 << 5) | (imm1to4 << 1)
+        self.imm = twos_complement(self.imm, 13)
+        print(self.imm)
+
     def __str__(self):
-        sign = (self.imm >> 12) == 1
-        imm = (self.imm) & 0xfff
-        if sign:
-            return "{} x{}, x{}, .-0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
+        if self.imm < 0:
+            return "{} x{}, x{}, .{}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
         else:
-            return "{} x{}, x{}, .+0x{:03x}".format(self._mnemonic, self.rs1, self.rs2, imm)
+            return "{} x{}, x{}, .+{}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
 
 class InstructionUType(Instruction):
     def __init__(self, rd: int = None, imm: int = None):

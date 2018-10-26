@@ -236,6 +236,9 @@ class InstructionAND(InstructionRType):
 import argparse
 from . import __version__
 
+class MachineDecodeError(Exception):
+    pass
+
 def decode(machinecode: int):
     opcode = machinecode & 0x7F
     for icls in get_insns():
@@ -243,6 +246,8 @@ def decode(machinecode: int):
             i = icls()
             i.decode(machinecode)
             print(i)
+            return
+    raise MachineDecodeError()
 
 def machinsn_decode():
     parser = argparse.ArgumentParser(description='Disassemble a machine instruction.')
