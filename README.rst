@@ -76,4 +76,12 @@ Finally, you can run the checks for the individual instructions seperately (used
     riscv-random-asm-check -s
 
 
-    
+Disassemble machine code
+````````````````````````
+
+You can disassemble a machine code to the assembly code on instruction level:
+
+::
+
+    riscv-machinsn-decode 0x007938b3
+    riscv-machinsn-decode 0xc9650993

@@ -232,3 +232,22 @@ class InstructionOR(InstructionRType):
 class InstructionAND(InstructionRType):
     def execute(self, model: Model):
         model.intreg[self.rd] = model.intreg[self.rs1] & model.intreg[self.rs2]
+
+import argparse
+from . import __version__
+
+def decode(machinecode: int):
+    opcode = machinecode & 0x7F
+    for icls in get_insns():
+        if icls._opcode == opcode and icls._match(machinecode):
+            i = icls()
+            i.decode(machinecode)
+            print(i)
+
+def machinsn_decode():
+    parser = argparse.ArgumentParser(description='Disassemble a machine instruction.')
+    parser.add_argument('insn', type=str, help='Instruction as hexstring (0x...)')
+    parser.add_argument('--version', help='Display version', action='version', version=__version__)
+    args = parser.parse_args()
+
+    decode(int(args.insn,16))
