@@ -52,7 +52,7 @@ class Immediate(object):
     def randomize(self):
         self.value = randint(self.min(), self.max())
         if self.lsb0:
-            self.value = self.value % 2
+            self.value = self.value - (self.value % 2)
 
     def __int__(self):
         return self.value.__int__()
