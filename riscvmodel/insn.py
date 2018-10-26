@@ -200,13 +200,13 @@ class InstructionSType(Instruction):
 
     def decode(self, machinecode: int):
         self.rs1 = (machinecode >> 15) & 0x1f
-        self.rs1 = (machinecode >> 20) & 0x1f
+        self.rs2 = (machinecode >> 20) & 0x1f
         imm5 = (machinecode >> 7) & 0x1f
         imm7 = (machinecode >> 25) & 0x7f
         self.imm.set_from_bits((imm7 << 5) | imm5)
 
     def __str__(self):
-        return "{} x{}, {}(x{})".format(self._mnemonic, self.rs1, self.imm, self.rs2)
+        return "{} x{}, {}(x{})".format(self._mnemonic, self.rs2, self.imm, self.rs1)
 
 
 class InstructionBType(Instruction):
@@ -250,7 +250,7 @@ class InstructionUType(Instruction):
 
     def decode(self, machinecode: int):
         self.rd = (machinecode >> 7) & 0x1f
-        self.imm = (machinecode >> 12) & 0xfffff
+        self.imm.set_from_bits((machinecode >> 12) & 0xfffff)
 
     def __str__(self):
         return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
