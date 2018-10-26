@@ -168,7 +168,7 @@ class InstructionBType(Instruction):
 
     def decode(self, machinecode: int):
         self.rs1 = (machinecode >> 15) & 0x1f
-        self.rs1 = (machinecode >> 20) & 0x1f
+        self.rs2 = (machinecode >> 20) & 0x1f
         imm11 = (machinecode >> 7) & 0x1
         imm1to4 = (machinecode >> 8) & 0xf
         imm5to10 = (machinecode >> 25) & 0x3f
