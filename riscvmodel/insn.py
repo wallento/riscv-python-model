@@ -6,20 +6,7 @@ from .variant import Variant
 from .model import Model
 
 
-class InstructionType(Enum):
-    INVALID = 0
-    R = 1
-    I = 2
-    S = 3
-    B = 4
-    U = 5
-    J = 6
-
-
 class Instruction(metaclass=ABCMeta):
-    def __init__(self, mnemonic):
-        self.type = InstructionType.INVALID
-        self.mnemonic = mnemonic
 
     @abstractmethod
     def randomize(self, variant: Variant):
@@ -29,15 +16,16 @@ class Instruction(metaclass=ABCMeta):
     def execute(self, model: Model):
         pass
 
+    @abstractmethod
+    def __str__(self):
+        pass
 
 class InstructionRType(Instruction):
-    def __init__(self, mnemonic, funct3, funct7):
-        super(InstructionRType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionRType, self).__init__()
         self.rd = None
         self.rs1 = None
         self.rs2 = None
-        self.funct3 = funct3
-        self.funct7 = funct7
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.intregs)
@@ -45,16 +33,15 @@ class InstructionRType(Instruction):
         self.rs2 = randrange(0, variant.intregs)
 
     def __str__(self):
-        return "{} x{}, x{}, x{}".format(self.mnemonic, self.rd, self.rs1, self.rs2)
+        return "{} x{}, x{}, x{}".format(self._mnemonic, self.rd, self.rs1, self.rs2)
 
 
 class InstructionIType(Instruction):
-    def __init__(self, mnemonic, funct3):
-        super(InstructionIType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionIType, self).__init__()
         self.rd = None
         self.rs1 = None
         self.imm = None
-        self.funct3 = funct3
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.intregs)
@@ -65,17 +52,16 @@ class InstructionIType(Instruction):
         sign = (self.imm >> 11) & 1 == 1
         imm = self.imm & 0x7FF
         if sign:
-            return "{} x{}, x{}, -0x{:03x}".format(self.mnemonic, self.rd, self.rs1, imm)
+            return "{} x{}, x{}, -0x{:03x}".format(self._mnemonic, self.rd, self.rs1, imm)
         else:
-            return "{} x{}, x{}, 0x{:03x}".format(self.mnemonic, self.rd, self.rs1, imm)
+            return "{} x{}, x{}, 0x{:03x}".format(self._mnemonic, self.rd, self.rs1, imm)
 
 class InstructionILType(Instruction):
-    def __init__(self, mnemonic, funct3):
-        super(InstructionILType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionILType, self).__init__()
         self.rd = None
         self.rs1 = None
         self.imm = None
-        self.funct3 = funct3
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.intregs)
@@ -86,18 +72,16 @@ class InstructionILType(Instruction):
         sign = (self.imm >> 11) & 1 == 1
         imm = self.imm & 0x7FF
         if sign:
-            return "{} x{}, -0x{:03x}(x{})".format(self.mnemonic, self.rd, imm, self.rs1)
+            return "{} x{}, -0x{:03x}(x{})".format(self._mnemonic, self.rd, imm, self.rs1)
         else:
-            return "{} x{}, 0x{:03x}(x{})".format(self.mnemonic, self.rd, imm, self.rs1)
+            return "{} x{}, 0x{:03x}(x{})".format(self._mnemonic, self.rd, imm, self.rs1)
 
 class InstructionISType(Instruction):
-    def __init__(self, mnemonic, funct3, funct7):
-        super(InstructionISType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionISType, self).__init__()
         self.rd = None
         self.rs1 = None
         self.shamt = None
-        self.funct3 = funct3
-        self.funct7 = funct7
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.intregs)
@@ -105,16 +89,15 @@ class InstructionISType(Instruction):
         self.shamt = randrange(0, 1 << 5)
 
     def __str__(self):
-        return "{} x{}, x{}, 0x{:02x}".format(self.mnemonic, self.rd, self.rs1, self.shamt)
+        return "{} x{}, x{}, 0x{:02x}".format(self._mnemonic, self.rd, self.rs1, self.shamt)
 
 
 class InstructionSType(Instruction):
-    def __init__(self, mnemonic, funct3):
-        super(InstructionSType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionSType, self).__init__()
         self.rs1 = None
         self.rs2 = None
         self.imm = None
-        self.funct3 = funct3
 
     def randomize(self, variant: Variant):
         self.rs1 = randrange(0, variant.intregs)
@@ -125,17 +108,16 @@ class InstructionSType(Instruction):
         sign = (self.imm >> 11) & 1 == 1
         imm = self.imm & 0x7ff
         if sign:
-            return "{} x{}, -0x{:03x}(x{})".format(self.mnemonic, self.rs1, imm, self.rs2)
+            return "{} x{}, -0x{:03x}(x{})".format(self._mnemonic, self.rs1, imm, self.rs2)
         else:
-            return "{} x{}, 0x{:03x}(x{})".format(self.mnemonic, self.rs1, imm, self.rs2)
+            return "{} x{}, 0x{:03x}(x{})".format(self._mnemonic, self.rs1, imm, self.rs2)
 
 class InstructionBType(Instruction):
-    def __init__(self, mnemonic, funct3):
-        super(InstructionBType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionBType, self).__init__()
         self.rs1 = None
         self.rs2 = None
         self.imm = None
-        self.funct3 = funct3
 
     def randomize(self, variant: Variant):
         self.rs1 = randrange(0, variant.intregs)
@@ -143,11 +125,11 @@ class InstructionBType(Instruction):
         self.imm = randrange(0, 1 << 12)
 
     def __str__(self):
-        return "{} x{}, x{}, 0x{:05x}".format(self.mnemonic, self.rs1, self.rs2, self.imm)
+        return "{} x{}, x{}, 0x{:05x}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
 
 class InstructionUType(Instruction):
-    def __init__(self, mnemonic):
-        super(InstructionUType, self).__init__(mnemonic)
+    def __init__(self):
+        super(InstructionUType, self).__init__()
         self.rd = None
         self.imm = None
 
@@ -156,12 +138,12 @@ class InstructionUType(Instruction):
         self.imm = randrange(0, 1 << 20)
 
     def __str__(self):
-        return "{} x{}, 0x{:05x}".format(self.mnemonic, self.rd, self.imm)
+        return "{} x{}, 0x{:05x}".format(self._mnemonic, self.rd, self.imm)
 
 
 class InstructionJType(Instruction):
-    def __init__(self, mnenomic):
-        super(InstructionJType, self).__init__(mnenomic)
+    def __init__(self):
+        super(InstructionJType, self).__init__()
         self.rd = None
         self.imm = None
 
@@ -170,25 +152,22 @@ class InstructionJType(Instruction):
         self.imm = randrange(0, 1 << 20)
 
     def __str__(self):
-        return "{} x{}, 0x{:05x}".format(self.mnemonic, self.rd, self.imm)
+        return "{} x{}, 0x{:05x}".format(self._mnemonic, self.rd, self.imm)
 
-def isa(mnemonic, funct3=None, funct7=None):
+
+def isa(mnemonic, opcode, funct3=None, funct7=None):
     def wrapper(wrapped):
         class WrappedClass(wrapped):
             _mnemonic = mnemonic
-            def __init__(self):
-                if funct3 is not None:
-                    if funct7 is not None:
-                        super(wrapped, self).__init__(mnemonic, funct3, funct7)
-                    else:
-                        super(wrapped, self).__init__(mnemonic, funct3)
-                else:
-                    super(wrapped, self).__init__(mnemonic)
+            _opcode = opcode
+            _funct3 = funct3
+            _funct7 = funct7
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__
         WrappedClass.__qualname__ = wrapped.__qualname__
         return WrappedClass
     return wrapper
+
 
 def get_insns(cls):
     insns = []
