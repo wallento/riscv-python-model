@@ -4,6 +4,8 @@ RISC-V Model
 This is a python model of the RISC-V ISA. It is intended to be a resource for Python-based automated testing and verification.
 It is under development and not very useful yet, but can be used to generate random assembler code.
 
+Documentation: https://riscv-python-model.readthedocs.io/en/latest/
+
 Quick Start
 -----------
 
@@ -87,6 +89,3 @@ Finally, you can run the checks for the individual instructions seperately (used
 ::
 
     riscv-random-asm-check -s
-
-
-

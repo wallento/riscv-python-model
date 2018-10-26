@@ -10,6 +10,7 @@ Welcome to RISC-V Model's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   dev
 
 Indices and tables
 ==================
