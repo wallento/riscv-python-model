@@ -169,8 +169,11 @@ def isa(mnemonic, opcode, funct3=None, funct7=None):
     return wrapper
 
 
-def get_insns(cls):
+def get_insns(cls = None):
     insns = []
+
+    if cls is None:
+        cls = Instruction
 
     if "_mnemonic" in cls.__dict__.keys():
         insns = [cls]
@@ -181,30 +184,13 @@ def get_insns(cls):
     return insns
 
 
-def reverse_lookup_class(mnemonic: str, cls):
-    if "_mnemonic" in cls.__dict__:
-        if cls._mnemonic == mnemonic:
-            return cls
-
-    for sub in cls.__subclasses__():
-        s = reverse_lookup_class(mnemonic, sub)
-        if s is not None:
-            return s
+def reverse_lookup(mnemonic: str):
+    for i in get_insns():
+        if "_mnemonic" in i.__dict__ and i._mnemonic == mnemonic:
+            return i
 
     return None
 
-def reverse_lookup(mnemonic: str):
-    return reverse_lookup_class(mnemonic, Instruction)
-
-
-def get_mnenomics_class(cls):
-    m = []
-    if "_mnemonic" in cls.__dict__:
-        m = [cls._mnemonic]
-    for sub in cls.__subclasses__():
-        m += get_mnenomics_class(sub)
-    return m
-
 
 def get_mnenomics():
-    return get_mnenomics_class(Instruction)
+    return [i._mnemonic for i in get_insns()]
