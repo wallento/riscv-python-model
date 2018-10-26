@@ -19,7 +19,7 @@ setuptools.setup(
       'console_scripts': [
          'riscv-random-asm = riscvmodel.random:gen_asm',
          'riscv-random-asm-check = riscvmodel.random:check_asm',
-         'riscv-machinsn-decode = riscvmodel.isa:machinsn_decode'
+         'riscv-machinsn-decode = riscvmodel.program:machinsn_decode'
       ],
     },
     setup_requires=[

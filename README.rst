@@ -48,20 +48,28 @@ For example to generate 100 assembler instructions only with ``add``, ``or`` and
 
     riscv-random-asm 100 -i add -i or -i slti
 
+Disassemble machine code
+````````````````````````
+
+You can disassemble a machine code to the assembly code on instruction level:
+
+::
+
+    riscv-machinsn-decode 0x007938b3
+    riscv-machinsn-decode 0xc9650993
+
+
 Automatically test random assembler sequences
 `````````````````````````````````````````````
 
-You can directly test those sequences with your compiler:
+``riscv-random-asm-check`` generates random assembler sequences, compiles them, reads back the machine codes and matches them.
+You can use that to test your compiler, but it is also used as sanity check for riscv-model itself.
 
 ::
 
     riscv-random-asm-check
 
-It will by default use ``riscv32-unknown-elf-gcc``, but you can configure the tool with ``-c``, for example:
-
-::
-
-    riscv-random-asm-check -c clang
+It will by default use ``riscv32-unknown-elf-gcc`` and ``riscv32-unknown-elf-objcopy``, but you can configure the tools with ``--compiler`` and ``--objcopy``.
 
 The automated tests will test all instructions, you can again restrict the number of instructions and the instructions:
 
@@ -76,12 +84,4 @@ Finally, you can run the checks for the individual instructions seperately (used
     riscv-random-asm-check -s
 
 
-Disassemble machine code
-````````````````````````
 
-You can disassemble a machine code to the assembly code on instruction level:
-
-::
-
-    riscv-machinsn-decode 0x007938b3
-    riscv-machinsn-decode 0xc9650993
