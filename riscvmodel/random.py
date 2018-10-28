@@ -5,14 +5,16 @@ from tempfile import mkstemp
 import subprocess
 
 from .isa import *
-from .variant import Variant, VariantRV32I
-from .program import read_from_binary
+from .insn import get_insns
+from .variant import Variant, BaseRV32I
+from .code import read_from_binary
+from .model import Model
 from . import __version__
 
 
 def random_instruction(variant: Variant, pool = None):
     if pool is None:
-        pool = get_insns(Instruction)
+        pool = get_insns()
 
     while True:
         c = random.choice(pool)
@@ -20,8 +22,9 @@ def random_instruction(variant: Variant, pool = None):
         i.randomize(variant)
         yield i
 
+
 def random_asm(N, pool=None):
-    v = VariantRV32I()
+    v = BaseRV32I()
     for i in range(N):
         yield next(random_instruction(v, pool=pool))
 
@@ -96,6 +99,7 @@ def check_asm(argv=None):
             check_asm_run(args.N, [i], args.cc, args.objcopy)
     else:
         check_asm_run(args.N, pool, args.cc, args.objcopy)
+
 
 if __name__ == "__main__":
     if sys.argv[1] == "random_asm":

@@ -1,8 +1,8 @@
 from random import randrange
 
-from riscvmodel.variant import Variant
-from riscvmodel.types import Register, RegisterFile, RVFITrace
-from riscvmodel.program import Program
+from .variant import Variant
+from .types import Register, RegisterFile
+from .program import Program
 
 
 # todo: raise exception on memory misalignment

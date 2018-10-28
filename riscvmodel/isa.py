@@ -1,4 +1,4 @@
-from riscvmodel.insn import *
+from .insn import *
 
 @isa("lui", 0x37)
 class InstructionLUI(InstructionUType):
