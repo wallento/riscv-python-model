@@ -47,6 +47,9 @@ class Instruction(metaclass=ABCMeta):
         """
         pass
 
+    def encode(self) -> int:
+        pass
+
     @abstractmethod
     def __str__(self):
         """
@@ -62,6 +65,7 @@ class Instruction(metaclass=ABCMeta):
         if key in self.__dict__ and isinstance(self.__dict__[key], Immediate):
             raise AttributeError("Instruction does not allow to overwrite immediates, use set() on them")
         super().__setattr__(key, value)
+
 
 class InstructionRType(Instruction):
     """
@@ -90,6 +94,11 @@ class InstructionRType(Instruction):
         self.rs1 = (machinecode >> 15) & 0x1f
         self.rs2 = (machinecode >> 20) & 0x1f
 
+    def encode(self) -> int:
+        x = self._opcode | (self._funct3 << 12) | (self._funct7 << 25)
+        x |= (self.rd << 7) | (self.rs1 << 15) | (self.rs2 << 20)
+        return x
+
     def __str__(self):
         return "{} x{}, x{}, x{}".format(self._mnemonic, self.rd, self.rs1, self.rs2)
 
@@ -107,7 +116,7 @@ class InstructionIType(Instruction):
     :param rs1: Source register 1
     :type rs1: int
     :param imm: 12-bit signed immediate
-    :type rs2: int
+    :type imm: int
     """
     def __init__(self, rd: int = None, rs1: int = None, imm: int = None):
         super(InstructionIType, self).__init__()
@@ -126,6 +135,11 @@ class InstructionIType(Instruction):
         self.rd = (machinecode >> 7) & 0x1f
         self.rs1 = (machinecode >> 15) & 0x1f
         self.imm.set_from_bits((machinecode >> 20) & 0xfff)
+
+    def encode(self) -> int:
+        x = self._opcode | (self._funct3 << 12)
+        x |= (self.rd << 7) | (self.rs1 << 15) | (self.imm.unsigned() << 20)
+        return x
 
     def __str__(self):
         return "{} x{}, x{}, {}".format(self._mnemonic, self.rd, self.rs1, self.imm)
@@ -167,6 +181,11 @@ class InstructionISType(InstructionIType):
         self.rs1 = (machinecode >> 15) & 0x1f
         self.shamt.set_from_bits((machinecode >> 20) & 0x1f)
 
+    def encode(self) -> int:
+        x = self._opcode | (self._funct3 << 12) | (self._funct7 << 25)
+        x |= (self.rd << 7) | (self.rs1 << 15) | (self.shamt.unsigned() << 20)
+        return x
+
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.intregs)
         self.rs1 = randrange(0, variant.intregs)
@@ -207,6 +226,13 @@ class InstructionSType(Instruction):
         imm7 = (machinecode >> 25) & 0x7f
         self.imm.set_from_bits((imm7 << 5) | imm5)
 
+    def encode(self) -> int:
+        imm5 = self.imm.unsigned() & 0x1f
+        imm7 = (self.imm.unsigned() >> 5) & 0x7f
+        x = self._opcode | (self._funct3 << 12) | (self.rs1 << 15) | (self.rs2 << 20)
+        x |= (imm7 << 25) | (imm5 << 7)
+        return x
+
     def __str__(self):
         return "{} x{}, {}(x{})".format(self._mnemonic, self.rs2, self.imm, self.rs1)
 
@@ -245,6 +271,15 @@ class InstructionBType(Instruction):
         imm12 = (machinecode >> 31) & 0x1
         self.imm.set_from_bits((imm12 << 12) | (imm11 << 11) | (imm5to10 << 5) | (imm1to4 << 1))
 
+    def encode(self) -> int:
+        imm12 = (self.imm.unsigned() >> 12) & 0x1
+        imm11 = (self.imm.unsigned() >> 11) & 0x1
+        imm1to4 = (self.imm.unsigned() >> 1) & 0xf
+        imm5to10 = (self.imm.unsigned() >> 5) & 0x3f
+        x = self._opcode | (self._funct3 << 12) | (self.rs1 << 15) | (self.rs2 << 20)
+        x |= (imm12 << 31) | (imm5to10 << 25) | (imm1to4 << 8) | (imm11 << 7)
+        return x
+
     def __str__(self):
         return "{} x{}, x{}, .{:+}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
 
@@ -272,6 +307,9 @@ class InstructionUType(Instruction):
     def decode(self, machinecode: int):
         self.rd = (machinecode >> 7) & 0x1f
         self.imm.set_from_bits((machinecode >> 12) & 0xfffff)
+
+    def encode(self):
+        return self._opcode | (self.rd << 7) | (self.imm.unsigned() << 12)
 
     def __str__(self):
         return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
@@ -304,6 +342,15 @@ class InstructionJType(Instruction):
         imm1to10 = (machinecode >> 21) & 0x3ff
         imm20 = (machinecode >> 31) & 0x1
         self.imm.set_from_bits((imm20 << 20) | (imm12to19 << 12) | (imm11 << 11) | (imm1to10 << 1))
+
+    def encode(self):
+        imm20 = (self.imm.unsigned() >> 20) & 0x1
+        imm12to19 = (self.imm.unsigned() >> 12) & 0xff
+        imm11 = (self.imm.unsigned() >> 11) & 0x1
+        imm1to10 = (self.imm.unsigned() >> 1) & 0x3ff
+        x = self._opcode | (self.rd << 7)
+        x |= (imm20 << 31) | (imm1to10 << 21) | (imm11 << 20) | (imm12to19 << 12)
+        return x
 
     def __str__(self):
         return "{} x{}, .{:+}".format(self._mnemonic, self.rd, self.imm)
