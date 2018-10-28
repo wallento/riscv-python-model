@@ -2,7 +2,7 @@ from random import randrange
 from abc import ABCMeta, abstractmethod
 
 from .variant import Variant
-from .model import Model
+from .model import State
 from .types import Immediate
 
 
@@ -26,7 +26,7 @@ class Instruction(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def execute(self, model: Model):
+    def execute(self, model: State):
         """
         Execute this instruction
 
