@@ -6,7 +6,7 @@ import subprocess
 
 from .isa import *
 from .insn import get_insns
-from .variant import Variant, BaseRV32I
+from .variant import Variant, RV32I
 from .code import read_from_binary
 from .model import Model
 from . import __version__
@@ -24,7 +24,7 @@ def random_instruction(variant: Variant, pool = None):
 
 
 def random_asm(N, pool=None):
-    v = BaseRV32I()
+    v = RV32I
     for i in range(N):
         yield next(random_instruction(v, pool=pool))
 

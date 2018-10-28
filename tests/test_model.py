@@ -1,6 +1,6 @@
 from riscvmodel.program.tests import *
 from riscvmodel.model import Model
-from riscvmodel.variant import BaseRV32I
+from riscvmodel.variant import RV32I
 
 import pytest
 
@@ -18,8 +18,6 @@ def check_model(model: Model, check: dict):
 
 def test_model_addi():
     pgm = ADDITest()
-    m = Model(BaseRV32I())
+    m = Model(RV32I)
     m.execute(pgm)
-    print(pgm.expects())
     check_model(m, pgm.expects())
-

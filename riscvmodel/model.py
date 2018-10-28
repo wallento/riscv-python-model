@@ -1,6 +1,6 @@
 from random import randrange
 
-from .variant import Variant
+from .variant import *
 from .types import Register, RegisterFile
 from .program import Program
 
@@ -125,3 +125,4 @@ class Model(object):
 
     def reset(self, pc: int = 0):
         self.state.reset(pc)
+

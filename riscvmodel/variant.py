@@ -1,27 +1,13 @@
+from collections import namedtuple
 
-class Variant(object):
-    def __init__(self):
-        self.intregs = None
-        self.xlen = None
+Extensions = namedtuple("Extensions",
+                        ["M", "A", "F", "D", "Q", "C"],
+                        defaults = [False] * 6)
 
+Variant = namedtuple("Variant",
+                     ["intregs", "xlen", "extensions"])
 
-class BaseRV32I(Variant):
-    def __init__(self):
-        super(BaseRV32I, self).__init__()
-        self.intregs = 32
-        self.xlen = 32
-
-
-class BaseRV32E(Variant):
-    def __init__(self):
-        super().__init__()
-        self.intregs = 16
-        self.xlen = 32
-
-
-class BaseRV64I(Variant):
-    def __init__(self):
-        super().__init__()
-        self.intregs = 32
-        self.xlen = 64
+RV32I = Variant(intregs=32, xlen=32, extensions = Extensions())
+RV32E = Variant(intregs=16, xlen=32, extensions = Extensions())
+RV32IC = Variant(intregs=32, xlen=32, extensions = Extensions(C=True))
 
