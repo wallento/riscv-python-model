@@ -38,7 +38,10 @@ def machinsn_decode():
 
     if "insn" in args:
         for i in args.insn:
-            print(decode(int(i,16)))
+            try:
+                print(decode(int(i,16)))
+            except MachineDecodeError:
+                print("Cannot decode {:08x}, invalid instruction".format(int(i,16)))
     elif "filename" in args:
         temp = mkstemp(suffix='.bin')
         subprocess.call([args.objcopy, '-O', 'binary', args.filename, temp[1]])
