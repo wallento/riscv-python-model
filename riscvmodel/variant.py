@@ -1,8 +1,8 @@
 from collections import namedtuple
 
 Extensions = namedtuple("Extensions",
-                        ["M", "A", "F", "D", "Q", "C"],
-                        defaults = [False] * 6)
+                        ["M", "A", "F", "D", "Q", "C"])
+Extensions.__new__.__defaults__ = (False,) * len(Extensions._fields)
 
 Variant = namedtuple("Variant",
                      ["intregs", "xlen", "extensions"])
