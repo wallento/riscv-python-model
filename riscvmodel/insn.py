@@ -66,6 +66,8 @@ class Instruction(metaclass=ABCMeta):
             raise AttributeError("Instruction does not allow to overwrite immediates, use set() on them")
         super().__setattr__(key, value)
 
+    def __eq__(self, other):
+        return self._opcode == other._opcode and self._funct3 == other._funct3 and self._funct7 == other._funct7
 
 class InstructionRType(Instruction):
     """
@@ -102,6 +104,10 @@ class InstructionRType(Instruction):
     def __str__(self):
         return "{} x{}, x{}, x{}".format(self._mnemonic, self.rd, self.rs1, self.rs2)
 
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.rd == other.rd
 
 class InstructionIType(Instruction):
     """
@@ -144,6 +150,10 @@ class InstructionIType(Instruction):
     def __str__(self):
         return "{} x{}, x{}, {}".format(self._mnemonic, self.rd, self.rs1, self.imm)
 
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rd == other.rd and self.rs1 == other.rs1 and self.imm == other.imm
 
 class InstructionILType(InstructionIType):
     """
@@ -194,6 +204,11 @@ class InstructionISType(InstructionIType):
     def __str__(self):
         return "{} x{}, x{}, 0x{:02x}".format(self._mnemonic, self.rd, self.rs1, self.shamt)
 
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rd == other.rd and self.rs2 == other.rs2 and self.shamt == other.shamt
+
 
 class InstructionSType(Instruction):
     """
@@ -235,6 +250,11 @@ class InstructionSType(Instruction):
 
     def __str__(self):
         return "{} x{}, {}(x{})".format(self._mnemonic, self.rs2, self.imm, self.rs1)
+
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.imm == other.imm
 
 
 class InstructionBType(Instruction):
@@ -283,6 +303,11 @@ class InstructionBType(Instruction):
     def __str__(self):
         return "{} x{}, x{}, .{:+}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
 
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.imm == other.imm
+
 
 class InstructionUType(Instruction):
     """
@@ -313,6 +338,11 @@ class InstructionUType(Instruction):
 
     def __str__(self):
         return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
+
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rd == other.rd and self.imm == other.imm
 
 
 class InstructionJType(Instruction):
@@ -355,6 +385,10 @@ class InstructionJType(Instruction):
     def __str__(self):
         return "{} x{}, .{:+}".format(self._mnemonic, self.rd, self.imm)
 
+    def __eq__(self, other):
+        if not super().__eq__(other):
+            return False
+        return self.rd == other.rd and self.imm == other.imm
 
 def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None):
     """
@@ -386,6 +420,18 @@ def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None):
                 if funct7 is not None and f7 != funct7:
                     return False
                 return True
+
+        WrappedClass.__name__ = wrapped.__name__
+        WrappedClass.__module__ = wrapped.__module__
+        WrappedClass.__qualname__ = wrapped.__qualname__
+        return WrappedClass
+    return wrapper
+
+
+def isa_pseudo():
+    def wrapper(wrapped):
+        class WrappedClass(wrapped):
+            _pseudo = True
 
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__

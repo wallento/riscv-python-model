@@ -247,3 +247,9 @@ class InstructionOR(InstructionRType):
 class InstructionAND(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] & model.intreg[self.rs2]
+
+
+@isa_pseudo()
+class InstructionNOP(InstructionADDI):
+    def __init__(self):
+        super().__init__(0, 0, 0)
