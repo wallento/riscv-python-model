@@ -4,7 +4,7 @@ from abc import ABCMeta, abstractmethod
 from .variant import Variant
 from .model import State
 from .types import Immediate
-
+from .variant import RV32I
 
 class Instruction(metaclass=ABCMeta):
     """
@@ -207,7 +207,7 @@ class InstructionISType(InstructionIType):
     def __eq__(self, other):
         if not super().__eq__(other):
             return False
-        return self.rd == other.rd and self.rs2 == other.rs2 and self.shamt == other.shamt
+        return self.rd == other.rd and self.rs1 == other.rs1 and self.shamt == other.shamt
 
 
 class InstructionSType(Instruction):
@@ -390,7 +390,8 @@ class InstructionJType(Instruction):
             return False
         return self.rd == other.rd and self.imm == other.imm
 
-def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None):
+
+def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, variant=RV32I, extension=None):
     """
     Decorator for the instructions. The decorator contains the static information for the instructions, in particular
     the encoding parameters and the assembler mnemonic.
@@ -409,6 +410,8 @@ def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None):
             _opcode = opcode
             _funct3 = funct3
             _funct7 = funct7
+            _variant = variant
+            _extension = extension
 
             @staticmethod
             def _match(machinecode: int):

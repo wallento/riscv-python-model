@@ -192,11 +192,44 @@ class Register(object):
     def __or__(self, other):
         new = Register(self.bits)
         if isinstance(other, int):
-            new.set(self.value | int)
-        if isinstance(other, (Register, Immediate)):
+            new.set(self.value | other)
+        elif isinstance(other, (Register, Immediate)):
             new.set(self.value | other.value)
         else:
             raise TypeError("unsupported operand type for Register |: {}".format(other.__class__))
+        return new
+
+    def __lt__(self, other):
+        return self.value < int(other)
+
+    def __xor__(self, other):
+        new = Register(self.bits)
+        if isinstance(other, int):
+            new.set(self.value ^ other)
+        elif isinstance(other, (Register, Immediate)):
+            new.set(self.value ^ other.value)
+        else:
+            raise TypeError("unsupported operand type for Register ^: {}".format(other.__class__))
+        return new
+
+    def __lshift__(self, other):
+        new = Register(self.bits)
+        if isinstance(other, int):
+            new.set(self.value << other)
+        elif isinstance(other, (Register, Immediate)):
+            new.set(self.value << other.value)
+        else:
+            raise TypeError("unsupported operand type for Register <<: {}".format(other.__class__))
+        return new
+
+    def __rshift__(self, other):
+        new = Register(self.bits)
+        if isinstance(other, int):
+            new.set(self.value >> other)
+        elif isinstance(other, (Register, Immediate)):
+            new.set(self.value >> other.value)
+        else:
+            raise TypeError("unsupported operand type for Register <<: {}".format(other.__class__))
         return new
 
 
@@ -261,7 +294,7 @@ class TraceRegister(Trace):
 
 class TraceIntegerRegister(TraceRegister):
     def __str__(self):
-        return "x{} = {:x}".format(self.id, self.value)
+        return "x{} = {:08x}".format(self.id, self.value)
 
 
 class TraceMemory(Trace):

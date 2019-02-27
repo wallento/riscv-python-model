@@ -1,7 +1,14 @@
 from .insn import *
+from .variant import RV64I
+
 
 @isa("lui", 0x37)
 class InstructionLUI(InstructionUType):
+    """
+    The Load Upper Immediate (LUI) instruction loads the given immediate (unsigned 20 bit) to the upper 20 bit
+    of the destination register. The lower bits are set to zero in the destination register. This instruction
+    can be used to efficiently form constants, as a sequence of LUI and ORI for example.
+    """
     def execute(self, model: State):
         model.intreg[self.rd] = (self.imm << 12)
 
@@ -141,7 +148,7 @@ class InstructionSLTI(InstructionIType):
 @isa("sltiu", 0x13, 3)
 class InstructionSLTIU(InstructionIType):
     def execute(self, model: State):
-        if model.intreg[self.rs1].unsigned() < self.imm:
+        if model.intreg[self.rs1].unsigned() < int(self.imm):
             model.intreg[self.rd] = 1
         else:
             model.intreg[self.rd] = 0
@@ -174,7 +181,7 @@ class InstructionSLLI(InstructionISType):
 @isa("srli", 0x13, 5, 0x00)
 class InstructionSRLI(InstructionISType):
     def execute(self, model: State):
-        model.intreg[self.rd] = model.intreg[self.rs1].unsigned() >> self.shamt
+        model.intreg[self.rd] = model.intreg[self.rs1].unsigned() >> int(self.shamt)
 
 
 @isa("srai", 0x13, 5, 0x20)
@@ -198,7 +205,7 @@ class InstructionSUB(InstructionRType):
 @isa("sll", 0x33, 1, 0x00)
 class InstructionSLL(InstructionRType):
     def execute(self, model: State):
-        model.intreg[self.rd] = model.intreg[self.rs1] << model.intreg[self.rs2]
+        model.intreg[self.rd] = model.intreg[self.rs1] << (model.intreg[self.rs2] & 0x1f)
 
 
 @isa("slt", 0x33, 2, 0x00)
@@ -247,6 +254,71 @@ class InstructionOR(InstructionRType):
 class InstructionAND(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] & model.intreg[self.rs2]
+
+
+@isa("fence", 0xF, 0, 0x00)
+class InstructionFENCE(Instruction):
+    pass
+
+
+@isa("fence.i", 0xF, 1, 0x00)
+class InstructionFENCEI(Instruction):
+    pass
+
+
+@isa("ecall", 0x73, 0)
+class InstructionECALL(Instruction):
+    pass
+
+
+@isa("ebreak", 0x73, 0)
+class InstructionEBREAK(Instruction):
+    pass
+
+
+@isa("csrrw", 0x73, 1)
+class InstructionCSRRW(Instruction):
+    pass
+
+
+@isa("csrrs", 0x73, 2)
+class InstructionCSRRS(Instruction):
+    pass
+
+
+@isa("csrrc", 0x73, 3)
+class InstructionCSRRC(Instruction):
+    pass
+
+
+@isa("csrrwi", 0x73, 5)
+class InstructionCSRRWI(Instruction):
+    pass
+
+
+@isa("csrrsi", 0x73, 6)
+class InstructionCSRRSI(Instruction):
+    pass
+
+
+@isa("csrrci", 0x73, 7)
+class InstructionCSRRCI(Instruction):
+    pass
+
+
+@isa("lwu", 0x3, 6, variant=RV64I)
+class InstructionLWU(InstructionIType):
+    pass
+
+
+@isa("ld", 0x3, 3, variant=RV64I)
+class InstructionLD(InstructionIType):
+    pass
+
+
+@isa("sd", 0x23, 3, variant=RV64I)
+class InstructionSD(InstructionISType):
+    pass
 
 
 @isa_pseudo()

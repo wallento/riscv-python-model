@@ -66,10 +66,8 @@ class GoldenUnbuffered(Golden):
         # Execute the expected instruction and verify the state is the same
         exp_trace = self.model.issue(exp)
         if not self.model.check(trace):
-            print(exp_trace)
             raise GoldenException("Unexpected state change: {}, expected: {}".format(",".join([str(t) for t in trace]),
                                                                                      ",".join([str(t) for t in exp_trace])))
-
 
     def reset(self, *, pc: int = 0):
         self.model.reset(pc=pc)

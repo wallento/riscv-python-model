@@ -130,7 +130,7 @@ class Model(object):
     def reset(self, *, pc: int = 0):
         self.state.reset(pc)
 
-    def check(self, traces):
+    def check(self, traces, exp=None):
         for t in traces:
             if isinstance(t, TraceIntegerRegister):
                 if int(self.state.intreg[t.id]) != int(t.value):
