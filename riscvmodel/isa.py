@@ -325,3 +325,50 @@ class InstructionSD(InstructionISType):
 class InstructionNOP(InstructionADDI):
     def __init__(self):
         super().__init__(0, 0, 0)
+
+
+@isaC("c.addi", 1, funct3=0)
+class InstructionCADDI(InstructionCIType):
+    def expand(self):
+        pass
+
+    def execute(self, model: State):
+        model.intreg[self.rd] = model.intreg[self.rd] + self.imm
+
+
+@isaC("c.andi", 1, funct3=4)
+class InstructionCANDI(InstructionCBType):
+    def expand(self):
+        pass
+
+
+@isaC("c.swsp", 2, funct3=6)
+class InstructionCSWSP(InstructionCSSType):
+    def expand(self):
+        pass
+
+    def decode(self, machinecode: int):
+        self.rs = (machinecode >> 2) & 0x1f
+        imm12to9 = (machinecode >> 9) & 0xf
+        imm8to7 = (machinecode >> 7) & 0x3
+        self.imm.set_from_bits((imm8to7 << 4) | imm12to9)
+
+    def execute(self, model: State):
+        pass
+
+@isaC("c.li", 1, funct3=2)
+class InstructionCLI(InstructionCIType):
+    def expand(self):
+        pass
+
+    def execute(self, model: State):
+        model.intreg[self.rd] = self.imm
+
+
+@isaC("c.mv", 2, funct4=8)
+class InstructionCMV(InstructionCRType):
+    def expand(self):
+        pass
+
+    def execute(self, model: State):
+        model.intreg[self.rd] = model.intreg[self.rs]
