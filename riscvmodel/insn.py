@@ -1,7 +1,7 @@
 from random import randrange
 from abc import ABCMeta, abstractmethod
 
-from .variant import Variant
+from .variant import Variant, Extensions
 from .model import State
 from .types import Immediate
 from .variant import RV32I

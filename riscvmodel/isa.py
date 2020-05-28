@@ -1,5 +1,5 @@
 from .insn import *
-from .variant import RV64I
+from .variant import RV64I,Extensions
 
 
 @isa("lui", 0x37)
