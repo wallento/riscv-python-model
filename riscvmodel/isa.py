@@ -267,23 +267,27 @@ class InstructionFENCEI(Instruction):
 
 
 @isa("ecall", 0x73, 0)
-class InstructionECALL(Instruction):
-    pass
+class InstructionECALL(InstructionIType):
+    def execute(self, model: State):
+        pass
 
 
 @isa("ebreak", 0x73, 0)
 class InstructionEBREAK(Instruction):
-    pass
+    def execute(self, model: State):
+        pass
 
 
 @isa("csrrw", 0x73, 1)
-class InstructionCSRRW(Instruction):
-    pass
+class InstructionCSRRW(InstructionIType):
+    def execute(self, model: State):
+        pass
 
 
 @isa("csrrs", 0x73, 2)
-class InstructionCSRRS(Instruction):
-    pass
+class InstructionCSRRS(InstructionIType):
+    def execute(self, model: State):
+        pass
 
 
 @isa("csrrc", 0x73, 3)
