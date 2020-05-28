@@ -391,6 +391,84 @@ class InstructionJType(Instruction):
         return self.rd == other.rd and self.imm == other.imm
 
 
+class InstructionCType(Instruction):
+    @abstractmethod
+    def expand(self):
+        pass
+
+
+class InstructionCBType(InstructionCType):
+    def __init__(self, rd: int = None, imm: int = None):
+        super(InstructionCBType, self).__init__()
+        self.rd = rd
+        if self.rd is not None:
+            self.rd = rd + 8
+        self.imm = Immediate(bits=6,signed=True,lsb0=True)
+        if imm is not None:
+            self.imm.set(imm)
+
+    def decode(self, machinecode: int):
+        self.rd = (machinecode)
+
+    def __str__(self):
+        return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
+
+class InstructionCRType(InstructionCType):
+    def __init__(self, rd: int = None, rs: int = None):
+        super(InstructionCRType, self).__init__()
+        self.rd = rd
+        self.rs = rs
+
+    def decode(self, machinecode: int):
+        self.rd = ((machinecode >> 7) & 0x1f)
+        self.rs = ((machinecode >> 2) & 0x1f)
+
+    def encode(self):
+        pass
+
+    def randomize(self, variant: Variant):
+        self.rd = randrange(8, 16)
+        self.rs = randrange(8, 16)
+
+    def __str__(self):
+        return "{} x{}, x{}".format(self._mnemonic, self.rd, self.rs)
+
+class InstructionCIType(InstructionCType):
+    def __init__(self, rd: int = None, imm: int = None):
+        super(InstructionCIType, self).__init__()
+        self.rd = rd
+        self.imm = Immediate(bits=6,signed=True,lsb0=True)
+        if imm is not None:
+            self.imm.set(imm)
+
+    def randomize(self, variant: Variant):
+        self.rd = randrange(0, 16)
+        self.imm.randomize()
+
+    def decode(self, machinecode: int):
+        self.rd = ((machinecode >> 7) & 0x1f)
+        imm12 = (machinecode >> 12) & 0x1
+        imm6to2 = (machinecode >> 2) & 0x1f
+        self.imm.set_from_bits((imm12 << 5) | imm6to2)
+
+    def __str__(self):
+        return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
+
+
+class InstructionCSSType(InstructionCType):
+    def __init__(self, rs: int = None, imm: int = None):
+        super(InstructionCSSType, self).__init__()
+        self.rs = rs
+        self.imm = Immediate(bits=6,signed=True,lsb0=True)
+        if imm is not None:
+            self.imm.set(imm)
+    def __str__(self):
+        return "{} x{}, {}(x2)".format(self._mnemonic, self.rs, self.imm)
+    def randomize(self, variant: Variant):
+        self.rd = randrange(0, 16)
+        self.imm.randomize()
+
+
 def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, variant=RV32I, extension=None):
     """
     Decorator for the instructions. The decorator contains the static information for the instructions, in particular
@@ -430,6 +508,44 @@ def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, varia
         return WrappedClass
     return wrapper
 
+def isaC(mnemonic: str, opcode: int, *, funct3=None, funct4=None, funct6=None, variant=RV32I, extension=Extensions(C=True)):
+    """
+    Decorator for the instructions. The decorator contains the static information for the instructions, in particular
+    the encoding parameters and the assembler mnemonic.
+
+    :param mnemonic: Assembler mnemonic
+    :return: Wrapper class that overwrites the actual definition and contains static data
+    """
+    def wrapper(wrapped):
+        """Get wrapper"""
+        class WrappedClass(wrapped):
+            assert funct3 is not None or funct4 is not None or funct6 is not None
+            """Generic wrapper class"""
+            _mnemonic = mnemonic
+            _variant = variant
+            _extension = extension
+
+            @staticmethod
+            def _match(machinecode: int):
+                """Try to match a machine code to this instruction"""
+                opc = machinecode & 0x3
+                if opc != opcode:
+                    return False
+
+                f4 = (machinecode >> 12) & 0xf
+                f3 = (machinecode >> 13) & 0x7
+
+                if funct4 is not None and f4 != funct4:
+                    return False
+                if funct3 is not None and f3 != funct3:
+                    return False
+                return True
+
+        WrappedClass.__name__ = wrapped.__name__
+        WrappedClass.__module__ = wrapped.__module__
+        WrappedClass.__qualname__ = wrapped.__qualname__
+        return WrappedClass
+    return wrapper
 
 def isa_pseudo():
     def wrapper(wrapped):
@@ -443,7 +559,7 @@ def isa_pseudo():
     return wrapper
 
 
-def get_insns(cls = None):
+def get_insns(*, cls = None):
     """
     Get all Instructions. This is based on all known subclasses of `cls`. If non is given, all Instructions are returned.
     Only such instructions are returned that can be generated, i.e., that have a mnemonic, opcode, etc. So other
@@ -451,7 +567,7 @@ def get_insns(cls = None):
 
     :param cls: Base class to get list
     :type cls: Instruction
-    :return: List of instructions
+    :return: List of instruction classes
     """
     insns = []
 
@@ -462,7 +578,7 @@ def get_insns(cls = None):
         insns = [cls]
 
     for subcls in cls.__subclasses__():
-        insns += get_insns(subcls)
+        insns += get_insns(cls = subcls)
 
     return insns
 

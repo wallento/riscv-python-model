@@ -9,6 +9,14 @@ class MachineDecodeError(Exception):
     pass
 
 def decode(machinecode: int):
+    if machinecode & 0x3 != 3:
+        # compact
+        for icls in get_insns(cls=InstructionCType):
+            if icls._match(machinecode):
+                i = icls()
+                i.decode(machinecode)
+                return i
+        raise MachineDecodeError("Cannot decode {:04x}".format(machinecode))
     opcode = machinecode & 0x7F
     for icls in get_insns():
         if icls._opcode == opcode and icls._match(machinecode):
