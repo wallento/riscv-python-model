@@ -13,7 +13,6 @@ class Instruction(metaclass=ABCMeta):
     This is the abstract base class for all instruction. They are derived via their instruction type.
     """
 
-    @abstractmethod
     def randomize(self, variant: Variant):
         """
         Randomize this instruction
@@ -37,7 +36,6 @@ class Instruction(metaclass=ABCMeta):
         """
         pass
 
-    @abstractmethod
     def decode(self, machinecode: int):
         """
         Decode a machine code and configure this instruction from it.
@@ -50,7 +48,6 @@ class Instruction(metaclass=ABCMeta):
     def encode(self) -> int:
         pass
 
-    @abstractmethod
     def __str__(self):
         """
         Generate assembler code
@@ -59,7 +56,13 @@ class Instruction(metaclass=ABCMeta):
 
         :return: Assembly string
         """
-        pass
+        return self._mnemonic
+
+    def inopstr(self, model):
+        return ""
+
+    def outopstr(self, model):
+        return ""
 
     def __setattr__(self, key, value):
         if key in self.__dict__ and isinstance(self.__dict__[key], Immediate):
@@ -101,6 +104,14 @@ class InstructionRType(Instruction):
         x |= (self.rd << 7) | (self.rs1 << 15) | (self.rs2 << 20)
         return x
 
+    def inopstr(self, model):
+        s  = "{:>3}={}, ".format("x{}".format(self.rs1), model.state.intreg[self.rs1])
+        s += "{:>3}={} ".format("x{}".format(self.rs2), model.state.intreg[self.rs2])
+        return s
+
+    def outopstr(self, model):
+        return "{:>3}={} ".format("x{}".format(self.rd), model.state.intreg[self.rd])
+
     def __str__(self):
         return "{} x{}, x{}, x{}".format(self._mnemonic, self.rd, self.rs1, self.rs2)
 
@@ -141,6 +152,12 @@ class InstructionIType(Instruction):
         self.rd = (machinecode >> 7) & 0x1f
         self.rs1 = (machinecode >> 15) & 0x1f
         self.imm.set_from_bits((machinecode >> 20) & 0xfff)
+
+    def inopstr(self, model):
+        return "{:>3}={} ".format("x{}".format(self.rs1), model.state.intreg[self.rs1])
+
+    def outopstr(self, model):
+        return "{:>3}={} ".format("x{}".format(self.rd), model.state.intreg[self.rd])
 
     def encode(self) -> int:
         x = self._opcode | (self._funct3 << 12)
@@ -201,6 +218,9 @@ class InstructionISType(InstructionIType):
         self.rs1 = randrange(0, variant.intregs)
         self.shamt.randomize()
 
+    def inopstr(self, model):
+        return "{:>3}={} ".format("x{}".format(self.rs1), model.state.intreg[self.rs1])
+
     def __str__(self):
         return "{} x{}, x{}, 0x{:02x}".format(self._mnemonic, self.rd, self.rs1, self.shamt)
 
@@ -247,6 +267,11 @@ class InstructionSType(Instruction):
         x = self._opcode | (self._funct3 << 12) | (self.rs1 << 15) | (self.rs2 << 20)
         x |= (imm7 << 25) | (imm5 << 7)
         return x
+
+    def inopstr(self, model):
+        s  = "{:>3}={}, ".format("x{}".format(self.rs1), model.state.intreg[self.rs1])
+        s += "{:>3}={}".format("x{}".format(self.rs2), model.state.intreg[self.rs2])
+        return s
 
     def __str__(self):
         return "{} x{}, {}(x{})".format(self._mnemonic, self.rs2, self.imm, self.rs1)
@@ -300,6 +325,11 @@ class InstructionBType(Instruction):
         x |= (imm12 << 31) | (imm5to10 << 25) | (imm1to4 << 8) | (imm11 << 7)
         return x
 
+    def inopstr(self, model):
+        s  = "{:>3}={}, ".format("x{}".format(self.rs1), model.state.intreg[self.rs1])
+        s += "{:>3}={}".format("x{}".format(self.rs2), model.state.intreg[self.rs2])
+        return s
+
     def __str__(self):
         return "{} x{}, x{}, .{:+}".format(self._mnemonic, self.rs1, self.rs2, self.imm)
 
@@ -335,6 +365,9 @@ class InstructionUType(Instruction):
 
     def encode(self):
         return self._opcode | (self.rd << 7) | (self.imm.unsigned() << 12)
+
+    def outopstr(self, model):
+        return "{:>3}={} ".format("x{}".format(self.rd), model.state.intreg[self.rd])
 
     def __str__(self):
         return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
@@ -381,6 +414,9 @@ class InstructionJType(Instruction):
         x = self._opcode | (self.rd << 7)
         x |= (imm20 << 31) | (imm1to10 << 21) | (imm11 << 20) | (imm12to19 << 12)
         return x
+
+    def outopstr(self, model):
+        return "{:>3}={} ".format("x{}".format(self.rd), model.state.intreg[self.rd])
 
     def __str__(self):
         return "{} x{}, .{:+}".format(self._mnemonic, self.rd, self.imm)
