@@ -195,7 +195,7 @@ class InstructionISType(InstructionIType):
     :param rs1: Source register 1
     :type rs1: int
     :param imm: 12-bit signed immediate
-    :type rs2: int
+    :type imm: int
     """
     def __init__(self, rd: int = None, rs1: int = None, shamt: int = None):
         super(InstructionISType, self).__init__()
@@ -560,6 +560,7 @@ def isaC(mnemonic: str, opcode: int, *, funct3=None, funct4=None, funct6=None, v
             _mnemonic = mnemonic
             _variant = variant
             _extension = extension
+            _opcode = opcode
 
             @staticmethod
             def _match(machinecode: int):
