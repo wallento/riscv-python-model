@@ -2,7 +2,7 @@ from .insn import *
 from .variant import RV64I,Extensions
 
 
-@isa("lui", 0x37)
+@isa("lui", opcode=0b0110111)
 class InstructionLUI(InstructionUType):
     """
     The Load Upper Immediate (LUI) instruction loads the given immediate (unsigned 20 bit) to the upper 20 bit
@@ -13,27 +13,27 @@ class InstructionLUI(InstructionUType):
         model.intreg[self.rd] = (self.imm << 12)
 
 
-@isa("auipc", 0x17)
+@isa("auipc", opcode=0b0010111)
 class InstructionAUIPC(InstructionUType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.pc + (self.imm << 12)
 
 
-@isa("jal", 0x6F)
+@isa("jal", opcode=0b1101111)
 class InstructionJAL(InstructionJType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.pc + 4
         model.pc = self.imm
 
 
-@isa("jalr", 0x67, 0)
+@isa("jalr", opcode=0b1100111, funct3=0b000)
 class InstructionJALR(InstructionIType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.pc + 4
         model.pc = model.intreg[self.rs1] + self.imm
 
 
-@isa("beq", 0x63, 0)
+@isa("beq", opcode=0b1100011, funct3=0b000)
 class InstructionBEQ(InstructionBType):
     def execute(self, model: State):
         # todo: problem with __cmp__
@@ -41,102 +41,101 @@ class InstructionBEQ(InstructionBType):
             model.pc = model.pc + self.imm
 
 
-@isa("bne", 0x63, 1)
+@isa("bne", opcode=0b1100011, funct3=0b001)
 class InstructionBNE(InstructionBType):
     def execute(self, model: State):
         if model.intreg[self.rs1].value != model.intreg[self.rs2].value:
             model.pc = model.pc + self.imm
 
 
-@isa("blt", 0x63, 4)
+@isa("blt", opcode=0b1100011, funct3=0b100)
 class InstructionBLT(InstructionBType):
     def execute(self, model: State):
         if model.intreg[self.rs1].value < model.intreg[self.rs2].value:
             model.pc = model.pc + self.imm
 
 
-@isa("bge", 0x63, 5)
+@isa("bge", opcode=0b1100011, funct3=0b101)
 class InstructionBGE(InstructionBType):
     def execute(self, model: State):
         if model.intreg[self.rs1].value >= model.intreg[self.rs2].value:
             model.pc = model.pc + self.imm
 
 
-@isa("bltu", 0x63, 6)
+@isa("bltu", opcode=0b1100011, funct3=0b110)
 class InstructionBLTU(InstructionBType):
     def execute(self, model: State):
         if model.intreg[self.rs1].unsigned() < model.intreg[self.rs2].unsigned():
             model.pc = model.pc + self.imm
 
 
-@isa("bgeu", 0x63, 7)
+@isa("bgeu", opcode=0b1100011, funct3=0b111)
 class InstructionBGEU(InstructionBType):
     def execute(self, model: State):
         if model.intreg[self.rs1].unsigned() >= model.intreg[self.rs2].unsigned():
             model.pc = model.pc + self.imm
 
 
-@isa("lb", 0x03, 0)
+@isa("lb", opcode=0b0000011, funct3=0b000)
 class InstructionLB(InstructionILType):
     def execute(self, model: State):
-        data = model.lb((model.intreg[self.rs1] + self.imm).unsigned())
+        data = model.memory.lb((model.intreg[self.rs1] + self.imm).unsigned())
         if (data >> 7) & 0x1:
             data |= 0xFFFFFF00
         model.intreg[self.rd] = data
 
-@isa("lh", 0x03, 1)
+@isa("lh", opcode=0b0000011, funct3=0b001)
 class InstructionLH(InstructionILType):
     def execute(self, model: State):
-        data = model.lh((model.intreg[self.rs1] + self.imm).unsigned())
+        data = model.memory.lh((model.intreg[self.rs1] + self.imm).unsigned())
         if (data >> 15) & 0x1:
             data |= 0xFFFF0000
         model.intreg[self.rd] = data
 
-
-@isa("lw", 0x03, 2)
+@isa("lw", opcode=0b0000011, funct3=0b010)
 class InstructionLW(InstructionILType):
     def execute(self, model: State):
-        data = model.lw((model.intreg[self.rs1] + self.imm).unsigned())
+        data = model.memory.lw((model.intreg[self.rs1] + self.imm).unsigned())
         model.intreg[self.rd] = data
 
 
-@isa("lbu", 0x03, 4)
+@isa("lbu", opcode=0b0000011, funct3=0b100)
 class InstructionLBU(InstructionILType):
     def execute(self, model: State):
-        model.intreg[self.rd] = model.lb((model.intreg[self.rs1] + self.imm).unsigned())
+        model.intreg[self.rd] = model.memory.lb((model.intreg[self.rs1] + self.imm).unsigned())
 
 
-@isa("lhu", 0x03, 5)
+@isa("lhu", opcode=0b0000011, funct3=0b101)
 class InstructionLHU(InstructionILType):
     def execute(self, model: State):
-        model.intreg[self.rd] = model.lh((model.intreg[self.rs1] + self.imm).unsigned())
+        model.intreg[self.rd] = model.memory.lh((model.intreg[self.rs1] + self.imm).unsigned())
 
 
-@isa("sb", 0x23, 0)
+@isa("sb", opcode=0b0100011, funct3=0b000)
 class InstructionSB(InstructionSType):
     def execute(self, model: State):
-        model.sb((model.intreg[self.rs1] + self.imm).unsigned(), model.intreg[self.rs2])
+        model.memory.sb((model.intreg[self.rs1] + self.imm).unsigned(), model.intreg[self.rs2])
 
 
-@isa("sh", 0x23, 1)
+@isa("sh", opcode=0b0100011, funct3=0b001)
 class InstructionSH(InstructionSType):
     def execute(self, model: State):
-        model.sh((model.intreg[self.rs1] + self.imm).unsigned(), model.intreg[self.rs2])
+        model.memory.sh((model.intreg[self.rs1] + self.imm).unsigned(), model.intreg[self.rs2])
 
 
-@isa("sw", 0x23, 2)
+@isa("sw", opcode=0b0100011, funct3=0b010)
 class InstructionSW(InstructionSType):
     def execute(self, model: State):
-        model.sw((model.intreg[self.rs1] + self.imm).unsigned(), model.intreg[self.rs2])
+        model.memory.sw((model.intreg[self.rs1] + self.imm).unsigned(), model.intreg[self.rs2])
 
 
-@isa("addi", 0x13, 0)
+@isa("addi", opcode=0b0010011, funct3=0b000)
 class InstructionADDI(InstructionIType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] + self.imm
 
 
-@isa("slti", 0x13, 2)
+@isa("slti", opcode=0b0010011, funct3=0b010)
 class InstructionSLTI(InstructionIType):
     def execute(self, model: State):
         if model.intreg[self.rs1] < self.imm:
@@ -145,7 +144,7 @@ class InstructionSLTI(InstructionIType):
             model.intreg[self.rd] = 0
 
 
-@isa("sltiu", 0x13, 3)
+@isa("sltiu", opcode=0b0010011, funct3=0b011)
 class InstructionSLTIU(InstructionIType):
     def execute(self, model: State):
         if model.intreg[self.rs1].unsigned() < int(self.imm):
@@ -154,61 +153,61 @@ class InstructionSLTIU(InstructionIType):
             model.intreg[self.rd] = 0
 
 
-@isa("xori", 0x13, 4)
+@isa("xori", opcode=0b0010011, funct3=0b100)
 class InstructionXORI(InstructionIType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] ^ self.imm
 
 
-@isa("ori", 0x13, 6)
+@isa("ori", opcode=0b0010011, funct3=0b110)
 class InstructionORI(InstructionIType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] | self.imm
 
 
-@isa("andi", 0x13, 7)
+@isa("andi", opcode=0b0010011, funct3=0b111)
 class InstructionANDI(InstructionIType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] & self.imm
 
 
-@isa("slli", 0x13, 1, 0x00)
+@isa("slli", opcode=0b0010011, funct3=0b001, funct7=0b0000000)
 class InstructionSLLI(InstructionISType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] << self.shamt
 
 
-@isa("srli", 0x13, 5, 0x00)
+@isa("srli", opcode=0b0010011, funct3=0b101, funct7=0b0000000)
 class InstructionSRLI(InstructionISType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1].unsigned() >> int(self.shamt)
 
 
-@isa("srai", 0x13, 5, 0x20)
+@isa("srai", opcode=0b0010011, funct3=0b101, funct7=0b0100000)
 class InstructionSRAI(InstructionISType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] >> self.shamt
 
 
-@isa("add", 0x33, 0, 0x00)
+@isa("add", opcode=0b0110011, funct3=0b000, funct7=0b0000000)
 class InstructionADD(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] + model.intreg[self.rs2]
 
 
-@isa("sub", 0x33, 0, 0x20)
+@isa("sub", opcode=0b0110011, funct3=0b000, funct7=0b0100000)
 class InstructionSUB(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] - model.intreg[self.rs2]
 
 
-@isa("sll", 0x33, 1, 0x00)
+@isa("sll", opcode=0b0110011, funct3=0b001, funct7=0b0000000)
 class InstructionSLL(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] << (model.intreg[self.rs2] & 0x1f)
 
 
-@isa("slt", 0x33, 2, 0x00)
+@isa("slt", opcode=0b0110011, funct3=0b010, funct7=0b0000000)
 class InstructionSLT(InstructionRType):
     def execute(self, model: State):
         if model.intreg[self.rs1] < model.intreg[self.rs2]:
@@ -217,7 +216,7 @@ class InstructionSLT(InstructionRType):
             model.intreg[self.rd] = 0
 
 
-@isa("sltu", 0x33, 3, 0x00)
+@isa("sltu", opcode=0b0110011, funct3=0b011, funct7=0b0000000)
 class InstructionSLTU(InstructionRType):
     def execute(self, state: State):
         if state.intreg[self.rs1].unsigned() < state.intreg[self.rs2].unsigned():
@@ -226,101 +225,110 @@ class InstructionSLTU(InstructionRType):
             state.intreg[self.rd] = 0
 
 
-@isa("xor", 0x33, 4, 0x00)
+@isa("xor", opcode=0b0110011, funct3=0b100, funct7=0b0000000)
 class InstructionXOR(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] ^ model.intreg[self.rs2]
 
 
-@isa("srl", 0x33, 5, 0x00)
+@isa("srl", opcode=0b0110011, funct3=0b101, funct7=0b0000000)
 class InstructionSRL(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] >> model.intreg[self.rs2]
 
 
-@isa("sra", 0x33, 5, 0x20)
+@isa("sra", opcode=0b0110011, funct3=0b101, funct7=0b0100000)
 class InstructionSRA(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] >> model.intreg[self.rs2]
 
 
-@isa("or", 0x33, 6, 0x00)
+@isa("or", opcode=0b0110011, funct3=0b110, funct7=0b0000000)
 class InstructionOR(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] | model.intreg[self.rs2]
 
 
-@isa("and", 0x33, 7, 0x00)
+@isa("and", opcode=0b0110011, funct3=0b111, funct7=0b0000000)
 class InstructionAND(InstructionRType):
     def execute(self, model: State):
         model.intreg[self.rd] = model.intreg[self.rs1] & model.intreg[self.rs2]
 
 
-@isa("fence", 0xF, 0, 0x00)
+@isa("fence", opcode=0b0001111, funct3=0b000, funct7=0b0000000)
 class InstructionFENCE(Instruction):
     pass
 
 
-@isa("fence.i", 0xF, 1, 0x00)
+@isa("fence.i", opcode=0b0001111, funct3=0b001, funct7=0b0000000)
 class InstructionFENCEI(Instruction):
     pass
 
 
-@isa("ecall", 0x73, 0)
-class InstructionECALL(InstructionIType):
+@isa("ecall", opcode=0b1110011, funct3=0b000, funct12=0b000000000000)
+class InstructionECALL(Instruction):
+    def execute(self, model: State):
+        pass
+    def __str__(self):
+        return "ecall"
+
+@isa("wfi", opcode=0b1110011, funct3=0b000, funct12=0b000100000101)
+class InstructionWFI(Instruction):
     def execute(self, model: State):
         pass
 
 
-@isa("ebreak", 0x73, 0)
+@isa("ebreak", opcode=0b1110011, funct3=0b000)
 class InstructionEBREAK(Instruction):
     def execute(self, model: State):
         pass
+    def __str__(self):
+        return "ebreak"
 
 
-@isa("csrrw", 0x73, 1)
+@isa("csrrw", opcode=0b1110011, funct3=0b001)
 class InstructionCSRRW(InstructionIType):
     def execute(self, model: State):
         pass
 
 
-@isa("csrrs", 0x73, 2)
+@isa("csrrs", opcode=0b1110011, funct3=0b010)
 class InstructionCSRRS(InstructionIType):
     def execute(self, model: State):
         pass
 
 
-@isa("csrrc", 0x73, 3)
+@isa("csrrc", opcode=0b1110011, funct3=0b011)
 class InstructionCSRRC(Instruction):
     pass
 
 
-@isa("csrrwi", 0x73, 5)
+@isa("csrrwi", opcode=0b1110011, funct3=0b101)
 class InstructionCSRRWI(Instruction):
     pass
 
 
-@isa("csrrsi", 0x73, 6)
+@isa("csrrsi", opcode=0b1110011, funct3=0b110)
 class InstructionCSRRSI(Instruction):
     pass
 
 
-@isa("csrrci", 0x73, 7)
+@isa("csrrci", opcode=0b1110011, funct3=0b111)
 class InstructionCSRRCI(Instruction):
     pass
 
 
-@isa("lwu", 0x3, 6, variant=RV64I)
+@isa("lwu", opcode=0b0000011, funct3=0b110, variant=RV64I)
 class InstructionLWU(InstructionIType):
     pass
 
 
-@isa("ld", 0x3, 3, variant=RV64I)
+@isa("ld", opcode=0b0000011, funct3=0b011, variant=RV64I)
 class InstructionLD(InstructionIType):
     pass
 
 
-@isa("sd", 0x23, 3, variant=RV64I)
+@isa("sd", opcode=0b0100011, funct3=0b011, variant=RV64I)
 class InstructionSD(InstructionISType):
     pass
 
@@ -329,9 +337,10 @@ class InstructionSD(InstructionISType):
 class InstructionNOP(InstructionADDI):
     def __init__(self):
         super().__init__(0, 0, 0)
+    def __str__(self):
+        return "nop"
 
-
-@isaC("c.addi", 1, funct3=0)
+@isaC("c.addi", 1, funct3=0b000)
 class InstructionCADDI(InstructionCIType):
     def expand(self):
         pass
@@ -340,7 +349,7 @@ class InstructionCADDI(InstructionCIType):
         model.intreg[self.rd] = model.intreg[self.rd] + self.imm
 
 
-@isaC("c.andi", 1, funct3=4)
+@isaC("c.andi", 1, funct3=0b100)
 class InstructionCANDI(InstructionCBType):
     def expand(self):
         pass

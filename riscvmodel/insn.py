@@ -505,7 +505,7 @@ class InstructionCSSType(InstructionCType):
         self.imm.randomize()
 
 
-def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, variant=RV32I, extension=None):
+def isa(mnemonic: str, *, opcode: int, funct3: int=None, funct7: int=None, funct12: int=None, variant=RV32I, extension=None):
     """
     Decorator for the instructions. The decorator contains the static information for the instructions, in particular
     the encoding parameters and the assembler mnemonic.
@@ -514,6 +514,7 @@ def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, varia
     :param opcode: Opcode of this instruction
     :param funct3: 3 bit function code on bits 14 to 12 (R-, I-, S- and B-type)
     :param funct7: 7 bit function code on bits 31 to 25 (R-type)
+    :param funct12: 12 bit function code on bits 31 to 20
     :return: Wrapper class that overwrites the actual definition and contains static data
     """
     def wrapper(wrapped):
@@ -524,6 +525,7 @@ def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, varia
             _opcode = opcode
             _funct3 = funct3
             _funct7 = funct7
+            _funct12 = funct12
             _variant = variant
             _extension = extension
 
@@ -532,9 +534,12 @@ def isa(mnemonic: str, opcode: int, funct3: int=None, funct7: int=None, *, varia
                 """Try to match a machine code to this instruction"""
                 f3 = (machinecode >> 12) & 0x7
                 f7 = (machinecode >> 25) & 0x7f
+                f12 = (machinecode >> 20) & 0xfff
                 if funct3 is not None and f3 != funct3:
                     return False
                 if funct7 is not None and f7 != funct7:
+                    return False
+                if funct12 is not None and f12 != funct12:
                     return False
                 return True
 
