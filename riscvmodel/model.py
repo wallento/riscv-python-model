@@ -83,16 +83,13 @@ class Memory(object):
 
     def commit(self):
         for update in self.memory_updates:
-            address = update[1]
+            address = update.addr
             base = address >> 2
             offset = address & 0x3
             if base not in self.memory:
                 self.memory[base] = randrange(0, 1 << 32)
-            data = update[2]
-            if update[0] == 1:
-                mask = ~(0xFF << (offset*8)) & 0xFFFFFFFF
-                data = (self.memory[base] & mask) | (data << (offset*8))
-            elif update[0] == 2:
+            data = update.data
+            if update.gran == TraceMemory.GRANULARITY.BYTE:
                 mask = ~(0xFF << (offset*8)) & 0xFFFFFFFF
                 data = (self.memory[base] & mask) | (data << (offset*8))
             self.memory[base] = data
