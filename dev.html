@@ -1,0 +1,706 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Handbook &#8212; RISC-V Model 0.2.3.dev21+gb48786d.d20200528 documentation</title>
+    <link rel="stylesheet" href="_static/pydoctheme.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Welcome to RISC-V Model’s documentation!" href="index.html" />
+    <link rel="shortcut icon" type="image/png" href="_static/py.png" />
+    
+    <script type="text/javascript" src="_static/copybutton.js"></script>
+    
+     
+
+  </head><body>  
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to RISC-V Model’s documentation!"
+             accesskey="P">previous</a> |</li>
+    <li><img src="_static/py.png" alt=""
+             style="vertical-align: middle; margin-top: -1px"/></li>
+    <li><a href="https://www.python.org/">Python</a> &#187;</li>
+    
+    <a href="index.html">RISC-V Model 0.2.3.dev21+gb48786d.d20200528 documentation</a> &#187;
+    
+
+        <li class="nav-item nav-item-this"><a href="">Developer Handbook</a></li>
+    <li class="right">
+        
+
+    <div class="inline-search" style="display: none" role="search">
+        <form class="inline-search" action="search.html" method="get">
+          <input placeholder="Quick search" type="text" name="q" />
+          <input type="submit" value="Go" />
+          <input type="hidden" name="check_keywords" value="yes" />
+          <input type="hidden" name="area" value="default" />
+        </form>
+    </div>
+    <script type="text/javascript">$('.inline-search').show(0);</script>
+         |
+    </li>
+
+      </ul>
+    </div>    
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="developer-handbook">
+<h1>Developer Handbook<a class="headerlink" href="#developer-handbook" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-riscvmodel.insn">
+<span id="instructions"></span><h2>Instructions<a class="headerlink" href="#module-riscvmodel.insn" title="Permalink to this headline">¶</a></h2>
+<dl class="py class">
+<dt id="riscvmodel.insn.Instruction">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">Instruction</code><a class="headerlink" href="#riscvmodel.insn.Instruction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for instructions</p>
+<p>This is the abstract base class for all instruction. They are derived via their instruction type.</p>
+<dl class="py method">
+<dt id="riscvmodel.insn.Instruction.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.Instruction.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.Instruction.execute">
+<em class="property">abstract </em><code class="sig-name descname">execute</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span><span class="p">:</span> <span class="n">riscvmodel.model.State</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.Instruction.execute" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute this instruction</p>
+<p>Execute the instruction on the given model</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>model</strong> – RISC-V core model</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.Instruction.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.Instruction.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionBType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionBType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rs1</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs2</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionBType" title="Permalink to this definition">¶</a></dt>
+<dd><p>B-type instructions encode branches. Branches have two source registers that are compared. They then change the
+program counter by the immediate value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rs1</strong> (<em>int</em>) – Source 1 for comparison</p></li>
+<li><p><strong>rs2</strong> (<em>int</em>) – Source 2 for comparison</p></li>
+<li><p><strong>imm</strong> (<em>int</em>) – Immediate for branch destination address calculation (13-bit, signed, 16-bit aligned)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionBType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionBType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionBType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionBType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionCBType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionCBType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCBType" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="riscvmodel.insn.InstructionCBType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCBType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionCIType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionCIType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCIType" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="riscvmodel.insn.InstructionCIType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCIType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionCIType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCIType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionCRType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionCRType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCRType" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="riscvmodel.insn.InstructionCRType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCRType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionCRType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCRType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionCSSType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionCSSType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rs</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCSSType" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="riscvmodel.insn.InstructionCSSType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionCSSType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionCType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionCType</code><a class="headerlink" href="#riscvmodel.insn.InstructionCType" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionILType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionILType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs1</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionILType" title="Permalink to this definition">¶</a></dt>
+<dd><p>I-type instruction specialization for stores. The produce a different assembler than the base class</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rd</strong> (<em>int</em>) – Destination register</p></li>
+<li><p><strong>rs1</strong> (<em>int</em>) – Source register 1</p></li>
+<li><p><strong>imm</strong> – 12-bit signed immediate</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionISType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionISType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs1</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">shamt</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionISType" title="Permalink to this definition">¶</a></dt>
+<dd><p>I-Type instruction specialization for shifts by immediate. The immediate differs here (5-bit unsigned).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rd</strong> (<em>int</em>) – Destination register</p></li>
+<li><p><strong>rs1</strong> (<em>int</em>) – Source register 1</p></li>
+<li><p><strong>imm</strong> (<em>int</em>) – 12-bit signed immediate</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionISType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionISType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionISType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionISType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionIType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionIType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs1</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionIType" title="Permalink to this definition">¶</a></dt>
+<dd><p>I-type instructions are registers that use one source register and an immediate to produce a new value for the
+destination register.</p>
+<p>Two specialization exist for this class: <a class="reference internal" href="#riscvmodel.insn.InstructionILType" title="riscvmodel.insn.InstructionILType"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstructionILType</span></code></a> for load instructions and
+<a class="reference internal" href="#riscvmodel.insn.InstructionISType" title="riscvmodel.insn.InstructionISType"><code class="xref py py-class docutils literal notranslate"><span class="pre">InstructionISType</span></code></a> for instructions that shift by an immediate value.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rd</strong> (<em>int</em>) – Destination register</p></li>
+<li><p><strong>rs1</strong> (<em>int</em>) – Source register 1</p></li>
+<li><p><strong>imm</strong> (<em>int</em>) – 12-bit signed immediate</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionIType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionIType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionIType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionIType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionJType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionJType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionJType" title="Permalink to this definition">¶</a></dt>
+<dd><p>J-type instruction are used for jump and link instructions.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rd</strong> (<em>int</em>) – Destination register</p></li>
+<li><p><strong>imm</strong> (<em>int</em>) – Immediate for the jump (21-bit, signed, 16-bit aligned)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionJType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionJType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionJType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionJType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionRType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionRType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs1</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs2</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionRType" title="Permalink to this definition">¶</a></dt>
+<dd><p>R-type instructions are 3-register instructions which use two source registers and write one output register.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rd</strong> (<em>int</em>) – Destination register</p></li>
+<li><p><strong>rs1</strong> (<em>int</em>) – Source register 1</p></li>
+<li><p><strong>rs2</strong> (<em>int</em>) – Source register 2</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionRType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionRType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionRType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionRType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionSType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionSType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rs1</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">rs2</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionSType" title="Permalink to this definition">¶</a></dt>
+<dd><p>S-type instructions are used for stores. They don’t have a destination register, but two source registers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rs1</strong> (<em>int</em>) – Source register for base address</p></li>
+<li><p><strong>rs2</strong> (<em>int</em>) – Source register for data</p></li>
+<li><p><strong>imm</strong> (<em>int</em>) – Offset of store, for calculation of address relative to rs1</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionSType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionSType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionSType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionSType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="riscvmodel.insn.InstructionUType">
+<em class="property">class </em><code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">InstructionUType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">rd</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">imm</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionUType" title="Permalink to this definition">¶</a></dt>
+<dd><p>U-type instructions are used for constant formation and set the upper bits of a register.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rd</strong> (<em>int</em>) – Destination register</p></li>
+<li><p><strong>imm</strong> (<em>int</em>) – Immediate (20-bit, unsigned)</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionUType.decode">
+<code class="sig-name descname">decode</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">machinecode</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionUType.decode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decode a machine code and configure this instruction from it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>machinecode</strong> (<em>int</em>) – Machine code as 32-bit integer</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="riscvmodel.insn.InstructionUType.randomize">
+<code class="sig-name descname">randomize</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variant</span><span class="p">:</span> <span class="n">riscvmodel.variant.Variant</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.InstructionUType.randomize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Randomize this instruction</p>
+<p>This function randomizes the instance of an instruction according to the given variant.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>variant</strong> – RISC-V ISA variant</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>nothing</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="riscvmodel.insn.get_insns">
+<code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">get_insns</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">cls</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.get_insns" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all Instructions. This is based on all known subclasses of <cite>cls</cite>. If non is given, all Instructions are returned.
+Only such instructions are returned that can be generated, i.e., that have a mnemonic, opcode, etc. So other
+classes in the hierarchy are not matched.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>cls</strong> (<a class="reference internal" href="#riscvmodel.insn.Instruction" title="riscvmodel.insn.Instruction"><em>Instruction</em></a>) – Base class to get list</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of instruction classes</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="riscvmodel.insn.get_mnenomics">
+<code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">get_mnenomics</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.get_mnenomics" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get all known mnemonics</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>List of all known mnemonics</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>List[str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="riscvmodel.insn.isa">
+<code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">isa</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mnemonic</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">opcode</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">funct3</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">funct7</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">funct12</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">variant</span><span class="o">=</span><span class="default_value">Variant(intregs=32, xlen=32, extensions=Extensions(M=False, A=False, F=False, D=False, Q=False, C=False))</span></em>, <em class="sig-param"><span class="n">extension</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.isa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator for the instructions. The decorator contains the static information for the instructions, in particular
+the encoding parameters and the assembler mnemonic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mnemonic</strong> – Assembler mnemonic</p></li>
+<li><p><strong>opcode</strong> – Opcode of this instruction</p></li>
+<li><p><strong>funct3</strong> – 3 bit function code on bits 14 to 12 (R-, I-, S- and B-type)</p></li>
+<li><p><strong>funct7</strong> – 7 bit function code on bits 31 to 25 (R-type)</p></li>
+<li><p><strong>funct12</strong> – 12 bit function code on bits 31 to 20</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Wrapper class that overwrites the actual definition and contains static data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="riscvmodel.insn.isaC">
+<code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">isaC</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mnemonic</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">opcode</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="o">*</span></em>, <em class="sig-param"><span class="n">funct3</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">funct4</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">funct6</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">variant</span><span class="o">=</span><span class="default_value">Variant(intregs=32, xlen=32, extensions=Extensions(M=False, A=False, F=False, D=False, Q=False, C=False))</span></em>, <em class="sig-param"><span class="n">extension</span><span class="o">=</span><span class="default_value">Extensions(M=False, A=False, F=False, D=False, Q=False, C=True)</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.isaC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator for the instructions. The decorator contains the static information for the instructions, in particular
+the encoding parameters and the assembler mnemonic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mnemonic</strong> – Assembler mnemonic</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Wrapper class that overwrites the actual definition and contains static data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="riscvmodel.insn.reverse_lookup">
+<code class="sig-prename descclassname">riscvmodel.insn.</code><code class="sig-name descname">reverse_lookup</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mnemonic</span><span class="p">:</span> <span class="n">str</span></em><span class="sig-paren">)</span><a class="headerlink" href="#riscvmodel.insn.reverse_lookup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find instruction that matches the mnemonic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>mnemonic</strong> – Mnemonic to match</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><a class="reference internal" href="#riscvmodel.insn.Instruction" title="riscvmodel.insn.Instruction"><code class="xref py py-class docutils literal notranslate"><span class="pre">Instruction</span></code></a> that matches or None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Developer Handbook</a><ul>
+<li><a class="reference internal" href="#module-riscvmodel.insn">Instructions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to RISC-V Model’s documentation!</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/dev.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>  
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to RISC-V Model’s documentation!"
+             >previous</a> |</li>
+    <li><img src="_static/py.png" alt=""
+             style="vertical-align: middle; margin-top: -1px"/></li>
+    <li><a href="https://www.python.org/">Python</a> &#187;</li>
+    
+    <a href="index.html">RISC-V Model 0.2.3.dev21+gb48786d.d20200528 documentation</a> &#187;
+    
+
+        <li class="nav-item nav-item-this"><a href="">Developer Handbook</a></li>
+    <li class="right">
+        
+
+    <div class="inline-search" style="display: none" role="search">
+        <form class="inline-search" action="search.html" method="get">
+          <input placeholder="Quick search" type="text" name="q" />
+          <input type="submit" value="Go" />
+          <input type="hidden" name="check_keywords" value="yes" />
+          <input type="hidden" name="area" value="default" />
+        </form>
+    </div>
+    <script type="text/javascript">$('.inline-search').show(0);</script>
+         |
+    </li>
+
+      </ul>
+    </div>  
+    <div class="footer">
+    &copy; <a href="copyright.html">Copyright</a> 2018-2020, Stefan Wallentowitz.
+    <br />
+
+    The Python Software Foundation is a non-profit corporation.
+<a href="https://www.python.org/psf/donations/">Please donate.</a>
+<br />
+    <br />
+
+    Last updated on None.
+    
+    <br />
+
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.1.0.
+    </div>
+
+  </body>
+</html>
