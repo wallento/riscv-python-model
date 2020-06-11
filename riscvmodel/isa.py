@@ -257,12 +257,13 @@ class InstructionAND(InstructionRType):
 
 @isa("fence", opcode=0b0001111, funct3=0b000, funct7=0b0000000)
 class InstructionFENCE(Instruction):
-    pass
-
+    def execute(self, model: State):
+        pass
 
 @isa("fence.i", opcode=0b0001111, funct3=0b001, funct7=0b0000000)
 class InstructionFENCEI(Instruction):
-    pass
+    def execute(self, model: State):
+        pass
 
 
 @isa("ecall", opcode=0b1110011, funct3=0b000, funct12=0b000000000000)

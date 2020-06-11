@@ -17,13 +17,13 @@ First install it:
 
 Create random assembler sequences
 `````````````````````````````````
-    
+
 Create a random assembler sequence:
 
 ::
 
     riscv-random-asm
-    
+
 You can tweak the assembler output:
 
 ::
