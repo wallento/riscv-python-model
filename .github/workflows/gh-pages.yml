@@ -10,10 +10,13 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
       - uses: ammaraskar/sphinx-action@master
         with:
           docs-folder: "docs/"
+          pre-build-command: "apt-get update -y && apt-get install -y git && pip install -e .[docs]"
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3

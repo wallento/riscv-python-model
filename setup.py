@@ -24,7 +24,11 @@ setuptools.setup(
     },
     setup_requires=[
         'setuptools_scm',
+        'wheel'
     ],
+    extras_require={
+        'docs': ['sphinx', 'python-docs-theme']
+    },
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
