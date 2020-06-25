@@ -26,11 +26,16 @@ def decode(machinecode: int):
     raise MachineDecodeError()
 
 
-def read_from_binary(fname: str):
+def read_from_binary(fname: str, *, stoponerror: bool = False):
     with open(fname, "rb") as f:
         insn = f.read(4)
         while insn:
-            yield decode(int.from_bytes(insn, 'little'))
+            try:
+                yield decode(int.from_bytes(insn, 'little'))
+            except MachineDecodeError as e:
+                if stoponerror:
+                    return
+                raise(e)
             insn = f.read(4)
 
 def machinsn_decode():
