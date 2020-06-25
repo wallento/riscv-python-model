@@ -17,11 +17,14 @@ class Simulator:
 
   def run(self, *, pc=0):
     self.model.reset(pc=pc)
+    cnt = 0
     while True:
       try:
         self.model.issue(self.program[int(self.model.state.pc)>>2])
+        cnt += 1
       except IndexError as e:
-        return
+        return cnt
+    return cnt
 
   def dump_data(self, *, address=0, size=None):
     data = b""
