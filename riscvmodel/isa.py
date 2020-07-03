@@ -1,5 +1,5 @@
 from .insn import *
-from .variant import RV64I,Extensions
+from .variant import RV64I,Extensions,RV32IM
 
 
 @isa("lui", opcode=0b0110111)
@@ -333,13 +333,60 @@ class InstructionLD(InstructionIType):
 class InstructionSD(InstructionISType):
     pass
 
-
 @isa_pseudo()
 class InstructionNOP(InstructionADDI):
     def __init__(self):
         super().__init__(0, 0, 0)
     def __str__(self):
         return "nop"
+
+@isa("mul", opcode=0b0110011, funct3=0b000, funct7=0b0000001, variant=RV32IM)
+class InstructionMUL(InstructionRType):
+    def execute(self, model: State):
+        model.intreg[self.rd] = model.intreg[self.rs1] * model.intreg[self.rs2]
+
+@isa("mulh", opcode=0b0110011, funct3=0b001, funct7=0b0000001, variant=RV32IM)
+class InstructionMULH(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
+@isa("mulhsu", opcode=0b0110011, funct3=0b010, funct7=0b0000001, variant=RV32IM)
+class InstructionMULHSU(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
+@isa("mulhu", opcode=0b0110011, funct3=0b011, funct7=0b0000001, variant=RV32IM)
+class InstructionMULHU(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
+@isa("div", opcode=0b0110011, funct3=0b100, funct7=0b0000001, variant=RV32IM)
+class InstructionDIV(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
+@isa("divu", opcode=0b0110011, funct3=0b101, funct7=0b0000001, variant=RV32IM)
+class InstructionDIVU(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
+@isa("rem", opcode=0b0110011, funct3=0b110, funct7=0b0000001, variant=RV32IM)
+class InstructionREM(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
+@isa("remu", opcode=0b0110011, funct3=0b111, funct7=0b0000001, variant=RV32IM)
+class InstructionREMU(InstructionRType):
+    def execute(self, model: State):
+        # TODO: implement
+        pass
+
 
 @isaC("c.addi", 1, funct3=0b000)
 class InstructionCADDI(InstructionCIType):
