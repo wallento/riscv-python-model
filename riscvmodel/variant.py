@@ -1,4 +1,4 @@
-# Copyright lowRISC contributors.
+# Copyright Stefan Wallentowitz
 # Licensed under the MIT License, see LICENSE for details.
 # SPDX-License-Identifier: MIT
 '''

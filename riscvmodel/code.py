@@ -2,7 +2,7 @@ import argparse
 from tempfile import mkstemp
 import subprocess
 
-from .isa import *
+from .insn import *
 from . import __version__
 
 class MachineDecodeError(Exception):
