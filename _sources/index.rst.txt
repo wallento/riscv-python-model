@@ -1,8 +1,3 @@
-.. RISC-V Model documentation master file, created by
-   sphinx-quickstart on Thu Oct 25 17:11:40 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to RISC-V Model's documentation!
 ========================================
 
@@ -10,7 +5,16 @@ Welcome to RISC-V Model's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   tools
    dev
+
+This is a Python RISC-V model, that can serve many purposes:
+
+* To learn RISC-V Assembly
+* As a reference model for verification
+* As a source of random instruction streams and programs
+
+Beside the usage as library there are multiple command line tools and utilities.
 
 Indices and tables
 ==================
