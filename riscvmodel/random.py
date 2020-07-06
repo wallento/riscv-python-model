@@ -29,20 +29,35 @@ def random_asm(N, pool=None):
         yield next(random_instruction(v, pool=pool))
 
 
-def gen_asm(argv=None):
+def gen_asm_parser():
     parser = argparse.ArgumentParser(description='Generate sequence of assembler instructions.')
     parser.add_argument('N', nargs='?', default=10, type=int, help='Number of assembler instructions')
-    parser.add_argument('-i', action='append', type=str, choices=get_mnenomics(), help='Restrict to instructions')
+    parser.add_argument('-v', '--variant', default='RV32I', help='Restrict to variant')
+    parser.add_argument('-i', '--instruction', action='append', type=str, help='Restrict to instructions')
     parser.add_argument('--version', help='Display version', action='version', version=__version__)
+    return parser
+
+def gen_asm(argv=None):
+    parser = gen_asm_parser()
 
     if argv is None:
         argv = sys.argv[1:]
     args = parser.parse_args(argv)
 
-    if args.i is None:
-        args.i = get_mnenomics()
+    variant = Variant(args.variant)
 
-    pool = [reverse_lookup(m) for m in args.i]
+    if not args.instruction:
+        pool = get_insns(variant=variant)
+    else:
+        pool = []
+        for mnemonic in args.instruction:
+            insn = reverse_lookup(mnemonic, variant)
+            if insn:
+                pool.append(insn)
+
+    if len(pool) == 0:
+        print("No instructions can be generated with the given contraints")
+        return
 
     for asm in random_asm(args.N, pool=pool):
         print(asm)

@@ -1,7 +1,7 @@
 from random import randrange
 from abc import ABCMeta, abstractmethod
 
-from .variant import Variant, Extensions
+from .variant import Variant
 from .model import State
 from .types import Immediate
 from .variant import RV32I
@@ -90,9 +90,9 @@ class InstructionRType(Instruction):
         self.rs2 = rs2
 
     def randomize(self, variant: Variant):
-        self.rd = randrange(0, variant.intregs)
-        self.rs1 = randrange(0, variant.intregs)
-        self.rs2 = randrange(0, variant.intregs)
+        self.rd = randrange(0, variant.xlen)
+        self.rs1 = randrange(0, variant.xlen)
+        self.rs2 = randrange(0, variant.xlen)
 
     def decode(self, machinecode: int):
         self.rd = (machinecode >> 7) & 0x1f
@@ -144,8 +144,8 @@ class InstructionIType(Instruction):
             self.imm.set(imm)
 
     def randomize(self, variant: Variant):
-        self.rd = randrange(0, variant.intregs)
-        self.rs1 = randrange(0, variant.intregs)
+        self.rd = randrange(0, variant.xlen)
+        self.rs1 = randrange(0, variant.xlen)
         self.imm.randomize()
 
     def decode(self, machinecode: int):
@@ -214,8 +214,8 @@ class InstructionISType(InstructionIType):
         return x
 
     def randomize(self, variant: Variant):
-        self.rd = randrange(0, variant.intregs)
-        self.rs1 = randrange(0, variant.intregs)
+        self.rd = randrange(0, variant.xlen)
+        self.rs1 = randrange(0, variant.xlen)
         self.shamt.randomize()
 
     def inopstr(self, model):
@@ -250,8 +250,8 @@ class InstructionSType(Instruction):
             self.imm.set(imm)
 
     def randomize(self, variant: Variant):
-        self.rs1 = randrange(0, variant.intregs)
-        self.rs2 = randrange(0, variant.intregs)
+        self.rs1 = randrange(0, variant.xlen)
+        self.rs2 = randrange(0, variant.xlen)
         self.imm.randomize()
 
     def decode(self, machinecode: int):
@@ -303,8 +303,8 @@ class InstructionBType(Instruction):
             self.imm.set(imm)
 
     def randomize(self, variant: Variant):
-        self.rs1 = randrange(0, variant.intregs)
-        self.rs2 = randrange(0, variant.intregs)
+        self.rs1 = randrange(0, variant.xlen)
+        self.rs2 = randrange(0, variant.xlen)
         self.imm.randomize()
 
     def decode(self, machinecode: int):
@@ -356,7 +356,7 @@ class InstructionUType(Instruction):
             self.imm.set(imm)
 
     def randomize(self, variant: Variant):
-        self.rd = randrange(0, variant.intregs)
+        self.rd = randrange(0, variant.xlen)
         self.imm.randomize()
 
     def decode(self, machinecode: int):
@@ -395,7 +395,7 @@ class InstructionJType(Instruction):
             self.imm.set(imm)
 
     def randomize(self, variant: Variant):
-        self.rd = randrange(0, variant.intregs)
+        self.rd = randrange(0, variant.xlen)
         self.imm.randomize()
 
     def decode(self, machinecode: int):
@@ -505,7 +505,7 @@ class InstructionCSSType(InstructionCType):
         self.imm.randomize()
 
 
-def isa(mnemonic: str, *, opcode: int, funct3: int=None, funct7: int=None, funct12: int=None, variant=RV32I, extension=None):
+def isa(mnemonic: str, variant: Variant, *, opcode: int, funct3: int=None, funct7: int=None, funct12: int=None):
     """
     Decorator for the instructions. The decorator contains the static information for the instructions, in particular
     the encoding parameters and the assembler mnemonic.
@@ -527,7 +527,6 @@ def isa(mnemonic: str, *, opcode: int, funct3: int=None, funct7: int=None, funct
             _funct7 = funct7
             _funct12 = funct12
             _variant = variant
-            _extension = extension
 
             @staticmethod
             def _match(machinecode: int):
@@ -549,7 +548,7 @@ def isa(mnemonic: str, *, opcode: int, funct3: int=None, funct7: int=None, funct
         return WrappedClass
     return wrapper
 
-def isaC(mnemonic: str, opcode: int, *, funct3=None, funct4=None, funct6=None, variant=RV32I, extension=Extensions(C=True)):
+def isaC(mnemonic: str, variant: Variant, *, opcode: int, funct3=None, funct4=None, funct6=None):
     """
     Decorator for the instructions. The decorator contains the static information for the instructions, in particular
     the encoding parameters and the assembler mnemonic.
@@ -564,7 +563,6 @@ def isaC(mnemonic: str, opcode: int, *, funct3=None, funct4=None, funct6=None, v
             """Generic wrapper class"""
             _mnemonic = mnemonic
             _variant = variant
-            _extension = extension
             _opcode = opcode
 
             @staticmethod
@@ -601,15 +599,15 @@ def isa_pseudo():
     return wrapper
 
 
-def get_insns(*, cls = None):
+def get_insns(*, cls = None, variant: Variant=RV32I):
     """
-    Get all Instructions. This is based on all known subclasses of `cls`. If non is given, all Instructions are returned.
-    Only such instructions are returned that can be generated, i.e., that have a mnemonic, opcode, etc. So other
+    Get all Instructions. This is based on all known subclasses of `cls`. If non
+    is given, all Instructions are returned. Only such instructions are returned
+    that can be generated, i.e., that have a mnemonic, opcode, etc. So other
     classes in the hierarchy are not matched.
 
-    :param cls: Base class to get list
-    :type cls: Instruction
-    :return: List of instruction classes
+    :param cls: Base class to get list :type cls: Instruction :return: List of
+    instruction classes
     """
     insns = []
 
@@ -617,23 +615,25 @@ def get_insns(*, cls = None):
         cls = Instruction
 
     if "_mnemonic" in cls.__dict__.keys():
-        insns = [cls]
+        # This filters out abstract classes
+        if variant is None or cls._variant <= variant:
+            insns = [cls]
 
     for subcls in cls.__subclasses__():
-        insns += get_insns(cls = subcls)
+        insns += get_insns(cls = subcls, variant=variant)
 
     return insns
 
 
-def reverse_lookup(mnemonic: str):
+def reverse_lookup(mnemonic: str, variant: Variant=None):
     """
     Find instruction that matches the mnemonic.
 
     :param mnemonic: Mnemonic to match
     :return: :class:`Instruction` that matches or None
     """
-    for i in get_insns():
-        if "_mnemonic" in i.__dict__ and i._mnemonic == mnemonic:
+    for i in get_insns(variant=variant):
+        if i._mnemonic == mnemonic:
             return i
 
     return None

@@ -17,6 +17,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     entry_points={
       'console_scripts': [
+         'riscv-describe-isa-variant = riscvmodel.variant:describe',
          'riscv-random-asm = riscvmodel.random:gen_asm',
          'riscv-random-asm-check = riscvmodel.random:check_asm',
          'riscv-machinsn-decode = riscvmodel.code:machinsn_decode'
@@ -27,7 +28,7 @@ setuptools.setup(
         'wheel'
     ],
     extras_require={
-        'docs': ['sphinx', 'python-docs-theme']
+        'docs': ['sphinx', 'python-docs-theme', 'sphinx-argparse']
     },
     classifiers=[
         "Programming Language :: Python :: 3",
