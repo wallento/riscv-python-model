@@ -4,8 +4,8 @@ Command line tools and utilities
 A couple of command line tools and utilities help you working with RISC-V and
 can serve as entry point for extending this package.
 
-Discover RISC-V ISA Variants: `riscv-describe-isa-variant`
-**********************************************************
+Discover RISC-V ISA Variants: ``riscv-describe-isa-variant``
+************************************************************
 
 .. argparse::
    :module: riscvmodel.variant
@@ -30,8 +30,8 @@ Usage Example:
         Zicsr    Control and Status Register Access
         Zifencei Instruction-Fetch Fence
 
-Generate a random instruction stream: `riscv-random-asm`
-********************************************************
+Generate a random instruction stream: ``riscv-random-asm``
+**********************************************************
 
 .. argparse::
    :module: riscvmodel.random
