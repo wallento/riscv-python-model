@@ -762,3 +762,7 @@ def get_mnenomics():
     :rtype: List[str]
     """
     return [i._mnemonic for i in get_insns()]
+
+class TerminateException(Exception):
+    def __init__(self, returncode):
+        self.returncode = returncode

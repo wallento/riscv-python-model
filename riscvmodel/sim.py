@@ -1,4 +1,5 @@
 from .model import Model, Memory
+from .isa import TerminateException
 
 import struct
 
@@ -22,7 +23,10 @@ class Simulator:
       try:
         self.model.issue(self.program[int(self.model.state.pc)>>2])
         cnt += 1
-      except IndexError as e:
+      except TerminateException as exc:
+        assert exc.returncode == 0
+        return cnt
+      except IndexError:
         return cnt
     return cnt
 

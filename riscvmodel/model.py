@@ -123,8 +123,11 @@ class Model(object):
         elif not isinstance(insn, list):
             insn = [insn]
 
-        for i in insn:
-            self.issue(i)
+        try:
+            for i in insn:
+                self.issue(i)
+        except TerminateException as ex:
+            assert ex.returncode == 0
 
     def randomize(self):
         self.state.randomize()
