@@ -8,7 +8,8 @@ from .program import Program
 class State(object):
     def __init__(self, variant: Variant):
         self.variant = variant
-        self.intreg = RegisterFile(variant.intregs, 32, {0: 0x0})
+        intregs = 32 if variant.baseint == "I" else 16
+        self.intreg = RegisterFile(intregs, 32, {0: 0x0})
         self.pc = Register(32)
         self.pc_update = Register(32)
         self.memory = Memory()
