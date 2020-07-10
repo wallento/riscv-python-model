@@ -29,6 +29,11 @@ class Instruction(metaclass=ABCMeta):
     _funct7 = None
     _funct12 = None
 
+    def ops_from_string(self, ops: str):
+        """
+        Extract operands from string
+        """
+
     def randomize(self, variant: Variant):
         """
         Randomize this instruction
@@ -112,6 +117,9 @@ class InstructionRType(Instruction):
         self.rs1 = rs1
         self.rs2 = rs2
 
+    def ops_from_string(self, ops):
+        (self.rd, self.rs1, self.rs2) = [int(op[1:]) for op in ops.split(",")]
+
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
         self.rs1 = randrange(0, variant.xlen)
@@ -171,6 +179,13 @@ class InstructionIType(Instruction):
         self.imm = Immediate(bits=12, signed=True)
         if imm is not None:
             self.imm.set(imm)
+
+    def ops_from_string(self, ops):
+        ops = [op for op in ops.split(",")]
+        self.rd = int(ops[0][1:])
+        self.rs1 = int(ops[1][1:])
+        self.imm.set(int(ops[2]))
+
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -240,6 +255,12 @@ class InstructionISType(InstructionIType):
         self.rs1 = rs1
         self.shamt = Immediate(bits=5)
 
+    def ops_from_string(self, ops):
+        ops = [op for op in ops.split(",")]
+        self.rd = int(ops[0][1:])
+        self.rs1 = int(ops[1][1:])
+        self.shamt.set(int(ops[2]))
+
     def decode(self, machinecode: int):
         self.rd = (machinecode >> 7) & 0x1F
         self.rs1 = (machinecode >> 15) & 0x1F
@@ -289,6 +310,12 @@ class InstructionSType(Instruction):
         self.imm = Immediate(bits=12, signed=True)
         if imm is not None:
             self.imm.set(imm)
+
+    def ops_from_string(self, ops):
+        ops = [op for op in ops.split(",")]
+        self.rs1 = int(ops[0][1:])
+        self.rs2 = int(ops[1][ops[1].find("(")+2:-1])
+        self.imm.set(int(ops[1][0:ops[1].find("(")]))
 
     def randomize(self, variant: Variant):
         self.rs1 = randrange(0, variant.xlen)
@@ -348,6 +375,12 @@ class InstructionBType(Instruction):
         if imm is not None:
             self.imm.set(imm)
 
+    def ops_from_string(self, ops):
+        ops = [op for op in ops.split(",")]
+        self.rs1 = int(ops[0][1:])
+        self.rs2 = int(ops[1][1:])
+        self.imm.set(int(ops[2]))
+
     def randomize(self, variant: Variant):
         self.rs1 = randrange(0, variant.xlen)
         self.rs2 = randrange(0, variant.xlen)
@@ -405,6 +438,11 @@ class InstructionUType(Instruction):
         self.imm = Immediate(bits=20)
         if imm is not None:
             self.imm.set(imm)
+
+    def ops_from_string(self, ops):
+        ops = [op for op in ops.split(",")]
+        self.rs1 = int(ops[0][1:])
+        self.imm.set(int(ops[1]))
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
