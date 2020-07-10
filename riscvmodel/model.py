@@ -34,7 +34,7 @@ class State(object):
         self.pc.set(pc)
 
     def __setattr__(self, key, value):
-        if key is "pc" and "pc_update" in self.__dict__:
+        if key == "pc" and "pc_update" in self.__dict__:
             self.pc_update.set(value)
         else:
             super().__setattr__(key, value)
