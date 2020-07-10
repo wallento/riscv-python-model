@@ -105,7 +105,8 @@ class Model(object):
     def issue(self, insn):
         self.state.pc += 4
         expected_pc = self.state.pc
-        insn.execute(self.state)
+        insn.execute(self)
+
         trace = self.state.changes()
         if self.verbose:
             print("{:20} | {}".format(str(insn), trace))

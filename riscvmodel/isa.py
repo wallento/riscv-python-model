@@ -10,7 +10,7 @@ from random import randrange
 from abc import ABCMeta, abstractmethod
 
 from .variant import Variant
-from .model import State
+from .model import Model
 from .types import Immediate
 from .variant import RV32I
 
@@ -40,7 +40,7 @@ class Instruction(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def execute(self, model: State):
+    def execute(self, model: Model):
         """
         Execute this instruction
 
