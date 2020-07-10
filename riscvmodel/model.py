@@ -96,10 +96,14 @@ class Memory(object):
 
         self.memory_updates = []
 
+class Environment:
+    def call(self, state: State):
+        pass
 
 class Model(object):
-    def __init__(self, variant: Variant, *, verbose = False):
+    def __init__(self, variant: Variant, *, environment: Environment = None, verbose = False):
         self.state = State(variant)
+        self.environment = environment if environment is not None else Environment()
         self.verbose = verbose
 
     def issue(self, insn):
