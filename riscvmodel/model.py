@@ -114,7 +114,7 @@ class Model(object):
 
         trace = self.state.changes()
         if self.verbose:
-            print("{:20} | {}".format(str(insn), trace))
+            print("{:20} | [{}]".format(str(insn), ", ".join([str(t) for t in trace])))
         self.state.commit()
         return trace
 
