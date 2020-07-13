@@ -243,7 +243,7 @@ class Register(object):
 
 
 class RegisterFile(object):
-    def __init__(self, num: int, bits: int, immutable: list = {}):
+    def __init__(self, num: int, bits: int, immutable: list = {}, prefix: str = "x"):
         self.num = num
         self.bits = bits
         self.regs = []
@@ -255,6 +255,8 @@ class RegisterFile(object):
             self.regs[r[0]].set(r[1])
             self.regs[r[0]].set_immutable(True)
 
+        self.prefix = prefix
+
     def randomize(self):
         for i in range(self.num):
             self.regs[i].randomize()
@@ -263,7 +265,7 @@ class RegisterFile(object):
         if not self.regs[key].immutable:
             reg = Register(self.bits)
             reg.set(value)
-            self.regs_updates.append(TraceIntegerRegister(key, reg))
+            self.regs_updates.append(TraceIntegerRegister(key, reg, prefix=self.prefix, width=self.bits))
 
     def __getitem__(self, item):
         return self.regs[item]
@@ -302,8 +304,11 @@ class TraceRegister(Trace):
 
 
 class TraceIntegerRegister(TraceRegister):
+    def __init__(self, id, value, *, prefix: str="x", width=32):
+        super().__init__(id, value)
+        self.prefix = prefix
     def __str__(self):
-        return "x{} = {:08x}".format(self.id, self.value)
+        return "{}{} = {}".format(self.prefix, self.id, str(self.value))
 
 
 class TraceMemory(Trace):
