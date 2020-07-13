@@ -127,7 +127,10 @@ class Immediate(object):
         return new
 
     def __eq__(self, other):
-        return self.value == other.value
+        if isinstance(other, int):
+            return self.value == other
+        else:
+            return self.value == other.value
 
 
 class Register(object):
