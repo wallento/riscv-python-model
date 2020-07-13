@@ -15,8 +15,8 @@ from .model import Model
 from .types import Immediate, Register
 from .variant import RV32I
 
-Field = namedtuple("Field", ["name", "base", "size", "description", "static", "value"])
-Field.__new__.__defaults__ = (None, None, None, None, False, None)
+Field = namedtuple("Field", ["name", "base", "size", "offset", "description", "static", "value"])
+Field.__new__.__defaults__ = (None, None, None, 0, None, False, None)
 
 class Instruction(metaclass=ABCMeta):
     """
@@ -58,7 +58,14 @@ class Instruction(metaclass=ABCMeta):
         fname = "field_{}".format(field)
         base = getattr(cls, fname).base
         size = getattr(cls, fname).size
-        return word | ((value & (2**size - 1)) << base)
+        if not isinstance(base, list):
+            base = [base]
+            size = [size]
+        off = 0
+        for part in range(len(base)):
+            word |= (((value >> off) & (2**size[part] - 1)) << base[part])
+            off += size[part]
+        return word
 
     @classmethod
     def get_fields(cls):
@@ -131,7 +138,7 @@ class Instruction(metaclass=ABCMeta):
         """
         word = 0
         for field in self.get_fields():
-            if field.static:
+            if field.value is not None:
                 word = self.set_field(field.name, word, field.value)
             else:
                 value = getattr(self, field.name)
@@ -207,8 +214,8 @@ class InstructionRType(InstructionFunct3Type, InstructionFunct7Type, metaclass=A
     asm_arg_signature = "<rd>, <rs1>, <rs2>"
 
     field_rd = Field(name="rd", base=7, size=5, description="")
-    field_rs1 = Field(name="rd", base=15, size=5, description="")
-    field_rs2 = Field(name="rd", base=20, size=5, description="")
+    field_rs1 = Field(name="rs1", base=15, size=5, description="")
+    field_rs2 = Field(name="rs2", base=20, size=5, description="")
 
     def __init__(self, rd: int = None, rs1: int = None, rs2: int = None):
         super(InstructionRType, self).__init__()
@@ -217,8 +224,8 @@ class InstructionRType(InstructionFunct3Type, InstructionFunct7Type, metaclass=A
         self.rs1 = rs1
         self.rs2 = rs2
 
-    def ops_from_string(self, ops):
-        (self.rd, self.rs1, self.rs2) = [int(op[1:]) for op in ops.split(",")]
+    def ops_from_list(self, ops):
+        (self.rd, self.rs1, self.rs2) = [int(op[1:]) for op in ops]
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -268,7 +275,7 @@ class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
 
     field_rd = Field(name="rd", base=7, size=5, description="")
     field_rs1 = Field(name="rs1", base=15, size=5, description="")
-    field_imm = Field(name="imm", base=20, size=5, description="")
+    field_imm = Field(name="imm", base=20, size=12, description="")
 
     def __init__(self, rd: int = None, rs1: int = None, imm: int = None):
         super(InstructionIType, self).__init__()
@@ -279,9 +286,15 @@ class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
             self.imm.set(imm)
 
     def ops_from_list(self, ops):
+        if len(ops) == 0: # ecall
+            return
         self.rd = int(ops[0][1:])
-        self.rs1 = int(ops[1][1:])
-        self.imm.set(int(ops[2]))
+        if ops[1][0] == "x":
+            self.rs1 = int(ops[1][1:])
+            self.imm.set(int(ops[2], 0))
+        else: # Load
+            self.rs1 = int(ops[2][1:])
+            self.imm.set(int(ops[1], 0))
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -299,12 +312,6 @@ class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
     def __str__(self) -> str:
         return "{} x{}, x{}, {}".format(self.mnemonic, self.rd, self.rs1,
                                         self.imm)
-
-    def __eq__(self, other) -> bool:
-        if not super().__eq__(other):
-            return False
-        return self.rd == other.rd and self.rs1 == other.rs1 and self.imm == other.imm
-
 
 class InstructionILType(InstructionIType, metaclass=ABCMeta):
     """
@@ -335,9 +342,13 @@ class InstructionISType(InstructionFunct3Type,InstructionFunct7Type, metaclass=A
     :type imm: int
     """
 
+    isa_format_id = "IS"
+
     field_rd = Field(name="rd", base=7, size=5, description="")
     field_rs1 = Field(name="rs1", base=15, size=5, description="")
     field_shamt = Field(name="shamt", base=20, size=5, description="")
+
+    asm_arg_signature = "<rd>, <rs1>, <shamt>"
 
     def __init__(self, rd: int = None, rs1: int = None, shamt: int = None):
         super(InstructionISType, self).__init__()
@@ -345,11 +356,10 @@ class InstructionISType(InstructionFunct3Type,InstructionFunct7Type, metaclass=A
         self.rs1 = rs1
         self.shamt = Immediate(bits=5, init=shamt)
 
-    def ops_from_string(self, ops):
-        ops = ops.split(",")
+    def ops_from_list(self, ops):
         self.rd = int(ops[0][1:])
         self.rs1 = int(ops[1][1:])
-        self.shamt.set(int(ops[2]))
+        self.shamt.set(int(ops[2], 0))
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -383,17 +393,25 @@ class InstructionSType(InstructionFunct3Type, metaclass=ABCMeta):
     :param imm: Offset of store, for calculation of address relative to rs1
     :type imm: int
     """
+
+    isa_format_id = "S"
+
+    field_rs1 = Field(name="rs1", base=15, size=5, description="")
+    field_rs2 = Field(name="rs2", base=20, size=5, description="")
+    field_imm = Field(name="imm", base=[7, 25], size=[5, 7], description="")
+
+    asm_arg_signature = "<rs2>, <imm>(<rs1>)"
+
     def __init__(self, rs1: int = None, rs2: int = None, imm: int = None):
         super(InstructionSType, self).__init__()
         self.rs1 = rs1
         self.rs2 = rs2
         self.imm = Immediate(bits=12, signed=True, init=imm)
 
-    def ops_from_string(self, ops):
-        ops = ops.split(",")
-        self.rs1 = int(ops[0][1:])
-        self.rs2 = int(ops[1][ops[1].find("(") + 2:-1])
-        self.imm.set(int(ops[1][0:ops[1].find("(")]))
+    def ops_from_list(self, ops):
+        self.rs1 = int(ops[2][1:])
+        self.rs2 = int(ops[0][1:])
+        self.imm.set(int(ops[1], 0))
 
     def randomize(self, variant: Variant):
         self.rs1 = randrange(0, variant.xlen)
@@ -411,12 +429,6 @@ class InstructionSType(InstructionFunct3Type, metaclass=ABCMeta):
         return "{} x{}, {}(x{})".format(self.mnemonic, self.rs2, self.imm,
                                         self.rs1)
 
-    def __eq__(self, other):
-        if not super().__eq__(other):
-            return False
-        return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.imm == other.imm
-
-
 class InstructionBType(InstructionFunct3Type, metaclass=ABCMeta):
     """
     B-type instructions encode branches. Branches have two source registers that
@@ -430,34 +442,30 @@ class InstructionBType(InstructionFunct3Type, metaclass=ABCMeta):
            16-bit aligned)
     :type imm: int
     """
+
+    isa_format_id = "B"
+
+    field_rs1 = Field(name="rs1", base=15, size=5, description="")
+    field_rs2 = Field(name="rs2", base=20, size=5, description="")
+    field_imm = Field(name="imm", base=[7, 25], size=[5, 7], offset=1, description="")
+
+    asm_arg_signature = "<rs1>, <rs2>, <imm>"
+
     def __init__(self, rs1: int = None, rs2: int = None, imm: int = None):
         super(InstructionBType, self).__init__()
         self.rs1 = rs1
         self.rs2 = rs2
-        self.imm = Immediate(bits=13, signed=True, lsb0=True)
-        if imm is not None:
-            self.imm.set(imm)
+        self.imm = Immediate(bits=13, signed=True, lsb0=True, init=imm)
 
-    def ops_from_string(self, ops):
-        ops = ops.split(",")
+    def ops_from_list(self, ops):
         self.rs1 = int(ops[0][1:])
         self.rs2 = int(ops[1][1:])
-        self.imm.set(int(ops[2]))
+        self.imm.set(int(ops[2], 0))
 
     def randomize(self, variant: Variant):
         self.rs1 = randrange(0, variant.xlen)
         self.rs2 = randrange(0, variant.xlen)
         self.imm.randomize()
-
-    def decode(self, machinecode: int):
-        self.rs1 = (machinecode >> 15) & 0x1F
-        self.rs2 = (machinecode >> 20) & 0x1F
-        imm11 = (machinecode >> 7) & 0x1
-        imm1to4 = (machinecode >> 8) & 0xF
-        imm5to10 = (machinecode >> 25) & 0x3F
-        imm12 = (machinecode >> 31) & 0x1
-        self.imm.set_from_bits((imm12 << 12) | (imm11 << 11) | (imm5to10 << 5)
-                               | (imm1to4 << 1))
 
     def inopstr(self, model):
         opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
@@ -470,12 +478,6 @@ class InstructionBType(InstructionFunct3Type, metaclass=ABCMeta):
         return "{} x{}, x{}, .{:+}".format(self.mnemonic, self.rs1, self.rs2,
                                            self.imm)
 
-    def __eq__(self, other):
-        if not super().__eq__(other):
-            return False
-        return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.imm == other.imm
-
-
 class InstructionUType(Instruction, metaclass=ABCMeta):
     """
     U-type instructions are used for constant formation and set the upper bits of a register.
@@ -485,15 +487,18 @@ class InstructionUType(Instruction, metaclass=ABCMeta):
     :param imm: Immediate (20-bit, unsigned)
     :type imm: int
     """
+
+    field_rd = Field(name="rd", base=7, size=5, description="")
+    field_imm = Field(name="imm", base=12, size=20, description="")
+
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionUType, self).__init__()
         self.rd = rd  # pylint: disable=invalid-name
         self.imm = Immediate(bits=20, init=imm)
 
-    def ops_from_string(self, ops):
-        ops = ops.split(",")
+    def ops_from_list(self, ops):
         self.rd = int(ops[0][1:])
-        self.imm.set(int(ops[1]))
+        self.imm.set(int(ops[1], 0))
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -505,11 +510,6 @@ class InstructionUType(Instruction, metaclass=ABCMeta):
 
     def __str__(self):
         return "{} x{}, {}".format(self.mnemonic, self.rd, self.imm)
-
-    def __eq__(self, other):
-        if not super().__eq__(other):
-            return False
-        return self.rd == other.rd and self.imm == other.imm
 
 
 class InstructionJType(Instruction, metaclass=ABCMeta):
@@ -539,10 +539,6 @@ class InstructionJType(Instruction, metaclass=ABCMeta):
     def __str__(self):
         return "{} x{}, .{:+}".format(self.mnemonic, self.rd, self.imm)
 
-    def __eq__(self, other):
-        if not super().__eq__(other):
-            return False
-        return self.rd == other.rd and self.imm == other.imm
 
 class InstructionCType(Instruction, metaclass=ABCMeta):
     """
