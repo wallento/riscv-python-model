@@ -281,6 +281,38 @@ class RegisterFile(object):
     def __str__(self):
         return "{}".format([str(r) for r in self.regs])
 
+class SingleRegister(object):
+    def __init__(self, bits: int, id: str):
+        self.bits = bits
+        self.reg = Register(bits)
+        self.reg_update = None
+        self.id = id
+
+    def randomize(self):
+        self.reg.randomize()
+
+    def update(self, value):
+        reg = Register(self.bits)
+        reg.set(value)
+        self.reg_update = TraceRegister(self.id, reg)
+
+    def get(self):
+        return self.reg
+
+    def commit(self):
+        if self.reg_update:
+            self.reg.set(self.reg_update.value)
+        self.reg_update = None
+
+    def changes(self) -> list:
+        return [self.reg_update] if self.reg_update else []
+
+    def __int__(self):
+        return self.reg.value
+
+    def __iadd__(self, other):
+        self.update(self.reg.value + other)
+        return self.reg
 
 class Trace(object):
     pass
