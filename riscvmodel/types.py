@@ -236,6 +236,11 @@ class Register(object):
             raise TypeError("unsupported operand type for Register >>: {}".format(other.__class__))
         return new
 
+    def __invert__(self):
+        new = Register(self.bits)
+        new.set(self.value ^ self.mask)
+        return new
+
 
 class RegisterFile(object):
     def __init__(self, num: int, bits: int, immutable: list = {}):
