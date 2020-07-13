@@ -21,13 +21,15 @@ class Immediate(object):
     :param lsb0: Set to True if this immediate is aligned to 16-bit boundaries
     :type lsb0: bool
     """
-    def __init__(self, *, bits: int, signed: bool = False, lsb0: bool = False):
+    def __init__(self, *, bits: int, signed: bool = False, lsb0: bool = False, init: int = None):
         self.bits = bits
         self.signed = signed
         self.lsb0 = lsb0
         self.value = 0
         self.tcmask = 1 << (self.bits - 1) # mask used for two's complement
         self.mask = (1 << self.bits) - 1
+        if init is not None:
+            self.set(init)
 
     def max(self) -> int:
         """
