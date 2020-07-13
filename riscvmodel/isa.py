@@ -54,11 +54,11 @@ class Instruction(metaclass=ABCMeta):
         return (machinecode >> base) & (2**size - 1)
 
     @classmethod
-    def set_field(cls, field, machinecode, value):
+    def set_field(cls, field, word, value):
         fname = "field_{}".format(field)
         base = getattr(cls, fname).base
         size = getattr(cls, fname).size
-        return machinecode | ((value & (2**size - 1)) << base)
+        return word | ((value & (2**size - 1)) << base)
 
     @classmethod
     def get_fields(cls):
@@ -129,6 +129,19 @@ class Instruction(metaclass=ABCMeta):
         """
         TODO: document
         """
+        word = 0
+        for field in self.get_fields():
+            if field.static:
+                word = self.set_field(field.name, word, field.value)
+            else:
+                value = getattr(self, field.name)
+                if isinstance(value, Immediate):
+                    word = self.set_field(field.name, word, value.unsigned())
+                elif isinstance(value, bool):
+                    word = self.set_field(field.name, word, 1 if value else 0)
+                else:
+                    word = self.set_field(field.name, word, value)
+        return word
 
     def __str__(self):
         """
@@ -212,16 +225,6 @@ class InstructionRType(InstructionFunct3Type, InstructionFunct7Type, metaclass=A
         self.rs1 = randrange(0, variant.xlen)
         self.rs2 = randrange(0, variant.xlen)
 
-    def decode(self, machinecode: int):
-        self.rd = (machinecode >> 7) & 0x1F
-        self.rs1 = (machinecode >> 15) & 0x1F
-        self.rs2 = (machinecode >> 20) & 0x1F
-
-    def encode(self) -> int:
-        word = self.opcode | (self._funct3 << 12) | (self._funct7 << 25)
-        word |= (self.rd << 7) | (self.rs1 << 15) | (self.rs2 << 20)
-        return word
-
     def inopstr(self, model):
         opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
                                     model.state.intreg[self.rs1])
@@ -285,11 +288,6 @@ class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
         self.rs1 = randrange(0, variant.xlen)
         self.imm.randomize()
 
-    def decode(self, machinecode: int):
-        self.rd = (machinecode >> 7) & 0x1F
-        self.rs1 = (machinecode >> 15) & 0x1F
-        self.imm.set_from_bits((machinecode >> 20) & 0xFFF)
-
     def inopstr(self, model) -> str:
         return "{:>3}={} ".format("x{}".format(self.rs1),
                                   model.state.intreg[self.rs1])
@@ -297,11 +295,6 @@ class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
     def outopstr(self, model) -> str:
         return "{:>3}={} ".format("x{}".format(self.rd),
                                   model.state.intreg[self.rd])
-
-    def encode(self) -> int:
-        code = self.opcode | (self._funct3 << 12)
-        code |= (self.rd << 7) | (self.rs1 << 15) | (self.imm.unsigned() << 20)
-        return code
 
     def __str__(self) -> str:
         return "{} x{}, x{}, {}".format(self.mnemonic, self.rd, self.rs1,
@@ -358,17 +351,6 @@ class InstructionISType(InstructionFunct3Type,InstructionFunct7Type, metaclass=A
         self.rs1 = int(ops[1][1:])
         self.shamt.set(int(ops[2]))
 
-    def decode(self, machinecode: int):
-        self.rd = (machinecode >> 7) & 0x1F
-        self.rs1 = (machinecode >> 15) & 0x1F
-        self.shamt.set_from_bits((machinecode >> 20) & 0x1F)
-
-    def encode(self) -> int:
-        code = self.opcode | (self._funct3 << 12) | (self._funct7 << 25)
-        code |= (self.rd << 7) | (self.rs1 << 15) | (
-            self.shamt.unsigned() << 20)
-        return code
-
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
         self.rs1 = randrange(0, variant.xlen)
@@ -417,21 +399,6 @@ class InstructionSType(InstructionFunct3Type, metaclass=ABCMeta):
         self.rs1 = randrange(0, variant.xlen)
         self.rs2 = randrange(0, variant.xlen)
         self.imm.randomize()
-
-    def decode(self, machinecode: int):
-        self.rs1 = (machinecode >> 15) & 0x1F
-        self.rs2 = (machinecode >> 20) & 0x1F
-        imm5 = (machinecode >> 7) & 0x1F
-        imm7 = (machinecode >> 25) & 0x7F
-        self.imm.set_from_bits((imm7 << 5) | imm5)
-
-    def encode(self) -> int:
-        imm5 = self.imm.unsigned() & 0x1F
-        imm7 = (self.imm.unsigned() >> 5) & 0x7F
-        code = self.opcode | (self._funct3 << 12) | (self.rs1 << 15) | (
-            self.rs2 << 20)
-        code |= (imm7 << 25) | (imm5 << 7)
-        return code
 
     def inopstr(self, model):
         opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
@@ -492,17 +459,6 @@ class InstructionBType(InstructionFunct3Type, metaclass=ABCMeta):
         self.imm.set_from_bits((imm12 << 12) | (imm11 << 11) | (imm5to10 << 5)
                                | (imm1to4 << 1))
 
-    def encode(self) -> int:
-        imm12 = (self.imm.unsigned() >> 12) & 0x1
-        imm11 = (self.imm.unsigned() >> 11) & 0x1
-        imm1to4 = (self.imm.unsigned() >> 1) & 0xF
-        imm5to10 = (self.imm.unsigned() >> 5) & 0x3F
-        code = self.opcode | (self._funct3 << 12) | (self.rs1 << 15) | (
-            self.rs2 << 20)
-        code |= (imm12 << 31) | (imm5to10 << 25) | (imm1to4 << 8) | (
-            imm11 << 7)
-        return code
-
     def inopstr(self, model):
         opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
                                     model.state.intreg[self.rs1])
@@ -543,13 +499,6 @@ class InstructionUType(Instruction, metaclass=ABCMeta):
         self.rd = randrange(0, variant.xlen)
         self.imm.randomize()
 
-    def decode(self, machinecode: int):
-        self.rd = (machinecode >> 7) & 0x1F
-        self.imm.set_from_bits((machinecode >> 12) & 0xFFFFF)
-
-    def encode(self):
-        return self.opcode | (self.rd << 7) | (self.imm.unsigned() << 12)
-
     def outopstr(self, model):
         return "{:>3}={} ".format("x{}".format(self.rd),
                                   model.state.intreg[self.rd])
@@ -582,25 +531,6 @@ class InstructionJType(Instruction, metaclass=ABCMeta):
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
         self.imm.randomize()
-
-    def decode(self, machinecode: int):
-        self.rd = (machinecode >> 7) & 0x1F
-        imm12to19 = (machinecode >> 12) & 0xFF
-        imm11 = (machinecode >> 20) & 0x1
-        imm1to10 = (machinecode >> 21) & 0x3FF
-        imm20 = (machinecode >> 31) & 0x1
-        self.imm.set_from_bits((imm20 << 20) | (imm12to19 << 12)
-                               | (imm11 << 11) | (imm1to10 << 1))
-
-    def encode(self):
-        imm20 = (self.imm.unsigned() >> 20) & 0x1
-        imm12to19 = (self.imm.unsigned() >> 12) & 0xFF
-        imm11 = (self.imm.unsigned() >> 11) & 0x1
-        imm1to10 = (self.imm.unsigned() >> 1) & 0x3FF
-        code = self.opcode | (self.rd << 7)
-        code |= (imm20 << 31) | (imm1to10 << 21) | (imm11 << 20) | (
-            imm12to19 << 12)
-        return code
 
     def outopstr(self, model):
         return "{:>3}={} ".format("x{}".format(self.rd),
@@ -653,13 +583,6 @@ class InstructionCRType(InstructionCType, metaclass=ABCMeta):
         super(InstructionCRType, self).__init__()
         self.rd = rd  # pylint: disable=invalid-name
         self.rs = rs  # pylint: disable=invalid-name
-
-    def decode(self, machinecode: int):
-        self.rd = (machinecode >> 7) & 0x1F
-        self.rs = (machinecode >> 2) & 0x1F
-
-    def encode(self):
-        pass
 
     def randomize(self, variant: Variant):
         self.rd = randrange(8, 16)
