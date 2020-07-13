@@ -126,6 +126,7 @@ class Variant:
 RV32I = Variant("RV32I")
 RV32E = Variant("RV32E")
 RV32IZicsr = Variant("RV32IZicsr")
+RV32IZifencei = Variant("RV32IZifencei")
 RV32IM = Variant("RV32IM")
 RV32IC = Variant("RV32IC")
 RV64I = Variant("RV64I")
