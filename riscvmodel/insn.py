@@ -276,20 +276,22 @@ class InstructionAND(InstructionRType):
         model.state.intreg[self.rd] = model.state.intreg[self.rs1] & model.state.intreg[self.rs2]
 
 
-@isa("fence", RV32I, opcode=0b0001111, funct3=0b000, funct7=0b0000000)
-class InstructionFENCE(Instruction):
+@isa("fence", RV32I, opcode=0b0001111, funct3=0b000)
+class InstructionFENCE(InstructionIType):
+    isa_format_id = "FENCE"
+
     def execute(self, model: Model):
         pass
 
 
-@isa("fence.i", RV32I, opcode=0b0001111, funct3=0b001, funct7=0b0000000)
-class InstructionFENCEI(Instruction):
+@isa("fence.i", RV32IZifencei, opcode=0b0001111, funct3=0b001)
+class InstructionFENCEI(InstructionIType):
     def execute(self, model: Model):
         pass
 
 
-@isa("ecall", RV32I, opcode=0b1110011, funct3=0b000, funct12=0b000000000000)
-class InstructionECALL(Instruction):
+@isa("ecall", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000000000000)
+class InstructionECALL(InstructionIType):
     def execute(self, model: Model):
         model.environment.call(model.state)
 
@@ -297,14 +299,14 @@ class InstructionECALL(Instruction):
         return "ecall"
 
 
-@isa("wfi", RV32I, opcode=0b1110011, funct3=0b000, funct12=0b000100000101)
-class InstructionWFI(Instruction):
+@isa("wfi", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000100000101, rs1=0b00000, rd=0b00000)
+class InstructionWFI(InstructionIType):
     def execute(self, model: Model):
         pass
 
 
-@isa("ebreak", RV32I, opcode=0b1110011, funct3=0b000)
-class InstructionEBREAK(Instruction):
+@isa("ebreak", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000000000001)
+class InstructionEBREAK(InstructionIType):
     def execute(self, model: Model):
         pass
 
@@ -325,27 +327,27 @@ class InstructionCSRRS(InstructionIType):
 
 
 @isa("csrrc", RV32IZicsr, opcode=0b1110011, funct3=0b011)
-class InstructionCSRRC(Instruction):
+class InstructionCSRRC(InstructionIType):
     def execute(self, model: Model):
         pass
 
 
-@isa("csrrwi", RV32IZicsr, opcode=0b1110011, funct3=0b101)
-class InstructionCSRRWI(Instruction):
-    def execute(self, model: Model):
-        pass
+#@isa("csrrwi", RV32IZicsr, opcode=0b1110011, funct3=0b101)
+#class InstructionCSRRWI(Instruction):
+#    def execute(self, model: Model):
+#        pass
 
 
-@isa("csrrsi", RV32IZicsr, opcode=0b1110011, funct3=0b110)
-class InstructionCSRRSI(Instruction):
-    def execute(self, model: Model):
-        pass
+#@isa("csrrsi", RV32IZicsr, opcode=0b1110011, funct3=0b110)
+#class InstructionCSRRSI(Instruction):
+#    def execute(self, model: Model):
+#        pass
 
 
-@isa("csrrci", RV32IZicsr, opcode=0b1110011, funct3=0b111)
-class InstructionCSRRCI(Instruction):
-    def execute(self, model: Model):
-        pass
+#@isa("csrrci", RV32IZicsr, opcode=0b1110011, funct3=0b111)
+#class InstructionCSRRCI(Instruction):
+#    def execute(self, model: Model):
+#        pass
 
 
 @isa("lwu", RV64I, opcode=0b0000011, funct3=0b110)
@@ -430,7 +432,7 @@ class InstructionREMU(InstructionRType):
         pass
 
 
-@isaC("c.addi", RV32IC, opcode=1, funct3=0b000)
+@isa_c("c.addi", RV32IC, opcode=1, funct3=0b000)
 class InstructionCADDI(InstructionCIType):
     def expand(self):
         pass
@@ -439,7 +441,7 @@ class InstructionCADDI(InstructionCIType):
         model.state.intreg[self.rd] = model.state.intreg[self.rd] + self.imm
 
 
-@isaC("c.andi", RV32IC, opcode=1, funct3=0b100)
+@isa_c("c.andi", RV32IC, opcode=1, funct3=0b100)
 class InstructionCANDI(InstructionCBType):
     def expand(self):
         pass
@@ -448,7 +450,7 @@ class InstructionCANDI(InstructionCBType):
         pass
 
 
-@isaC("c.swsp", RV32IC, opcode=2, funct3=6)
+@isa_c("c.swsp", RV32IC, opcode=2, funct3=6)
 class InstructionCSWSP(InstructionCSSType):
     def expand(self):
         pass
@@ -463,7 +465,7 @@ class InstructionCSWSP(InstructionCSSType):
         pass
 
 
-@isaC("c.li", RV32IC, opcode=1, funct3=2)
+@isa_c("c.li", RV32IC, opcode=1, funct3=2)
 class InstructionCLI(InstructionCIType):
     def expand(self):
         pass
@@ -472,7 +474,7 @@ class InstructionCLI(InstructionCIType):
         model.state.intreg[self.rd] = self.imm
 
 
-@isaC("c.mv", RV32IC, opcode=2, funct4=8)
+@isa_c("c.mv", RV32IC, opcode=2, funct4=8)
 class InstructionCMV(InstructionCRType):
     def expand(self):
         pass

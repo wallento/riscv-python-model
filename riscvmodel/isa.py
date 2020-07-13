@@ -8,12 +8,15 @@ classes. Actual instructions are implemented in the insn module.
 
 from random import randrange
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 
 from .variant import Variant
 from .model import Model
-from .types import Immediate
+from .types import Immediate, Register
 from .variant import RV32I
 
+Field = namedtuple("Field", ["name", "base", "size", "description", "static", "value"])
+Field.__new__.__defaults__ = (None, None, None, None, False, None)
 
 class Instruction(metaclass=ABCMeta):
     """
@@ -23,15 +26,64 @@ class Instruction(metaclass=ABCMeta):
     their instruction type.
     """
 
-    _mnemonic = None
-    _opcode = None
-    _funct3 = None
-    _funct7 = None
-    _funct12 = None
+    # Class members starting with "field_" are defined by the ISA
+    field_opcode = Field(name="opcode", base=0, size=7, description="", static=True)
+
+    # Class members starting with "isa_" are defined by the ISA and describe and
+    # identify an instruction
+    mnemonic = None
+    coding = None
+    isa_variant = None
+
+    isa_format_id = None
+
+    asm_arg_signature = ""
+
+    @classmethod
+    def asm_signature(cls):
+        signature = cls.mnemonic
+        if len(cls.asm_arg_signature) > 0:
+            signature += " " + cls.asm_arg_signature
+        return signature
+
+    @classmethod
+    def extract_field(cls, field, machinecode):
+        fname = "field_{}".format(field)
+        base = getattr(cls, fname).base
+        size = getattr(cls, fname).size
+        return (machinecode >> base) & (2**size - 1)
+
+    @classmethod
+    def set_field(cls, field, machinecode, value):
+        fname = "field_{}".format(field)
+        base = getattr(cls, fname).base
+        size = getattr(cls, fname).size
+        return machinecode | ((value & (2**size - 1)) << base)
+
+    @classmethod
+    def get_fields(cls):
+        return [getattr(cls, member) for member in dir(cls) if member.startswith("field_")]
+
+    @classmethod
+    def get_static_fields(cls):
+        return [field for field in cls.get_fields() if field.static]
+
+    @classmethod
+    def get_isa_format(cls, *, asdict: bool=False):
+        fields = [getattr(cls, attr) for attr in dir(cls) if attr.startswith("field_")]
+        if asdict:
+            fields = [field._asdict() for field in fields]
+        return {"id": cls.isa_format_id, "fields": fields}
 
     def ops_from_string(self, ops: str):
         """
         Extract operands from string
+        """
+        self.ops_from_list(ops.split(","))
+
+    def ops_from_list(self, ops: list):
+        """
+        Extract operands from list of string
         """
 
     def randomize(self, variant: Variant):
@@ -55,13 +107,23 @@ class Instruction(metaclass=ABCMeta):
         :return: nothing
         """
 
-    def decode(self, machinecode: int):
+    def decode(self, word: int):
         """
         Decode a machine code and configure this instruction from it.
 
-        :param machinecode: Machine code as 32-bit integer
-        :type machinecode: int
+        :param word: Machine code as 32-bit integer
+        :type word: int
         """
+        for field in self.get_fields():
+            if field.static:
+                assert self.extract_field(field.name, word) == field.value
+            else:
+                attr = getattr(self, field.name)
+                if isinstance(attr, Register):
+                    attr.set(self.extract_field(field.name, word))
+                else:
+                    assert isinstance(attr, Immediate)
+                    attr.set_from_bits(self.extract_field(field.name, word))
 
     def encode(self) -> int:
         """
@@ -76,14 +138,20 @@ class Instruction(metaclass=ABCMeta):
 
         :return: Assembly string
         """
-        return str(self._mnemonic)
+        return str(self.mnemonic)
 
     # pylint: disable=R0201,W0613
     def inopstr(self, model) -> str:
+        """
+        TODO: document
+        """
         return ""
 
     # pylint: disable=R0201,W0613
     def outopstr(self, model) -> str:
+        """
+        TODO: document
+        """
         return ""
 
     def __setattr__(self, key, value):
@@ -94,11 +162,22 @@ class Instruction(metaclass=ABCMeta):
         super().__setattr__(key, value)
 
     def __eq__(self, other):
-        return (self._opcode == other._opcode and self._funct3 == other._funct3
-                and self._funct7 == other._funct7)
+        for field in self.get_fields():
+            if field.static:
+                if getattr(self, field) != getattr(other, field):
+                    return False
+            else:
+                if getattr(self, field[6:]) != getattr(other, field[6:]):
+                    return False
+        return True
 
+class InstructionFunct3Type(Instruction, metaclass=ABCMeta):
+    field_funct3 = Field(name="funct3", base=12, size=3, description="", static=True)
 
-class InstructionRType(Instruction):
+class InstructionFunct7Type(Instruction, metaclass=ABCMeta):
+    field_funct7 = Field(name="funct7", base=25, size=7, description="", static=True)
+
+class InstructionRType(InstructionFunct3Type, InstructionFunct7Type, metaclass=ABCMeta):
     """
     R-type instructions are 3-register instructions which use two source
     registers and write one output register.
@@ -110,6 +189,14 @@ class InstructionRType(Instruction):
     :param rs2: Source register 2
     :type rs2: int
     """
+
+    isa_format_id = "R"
+    asm_arg_signature = "<rd>, <rs1>, <rs2>"
+
+    field_rd = Field(name="rd", base=7, size=5, description="")
+    field_rs1 = Field(name="rd", base=15, size=5, description="")
+    field_rs2 = Field(name="rd", base=20, size=5, description="")
+
     def __init__(self, rd: int = None, rs1: int = None, rs2: int = None):
         super(InstructionRType, self).__init__()
         # pylint: disable=C0103
@@ -131,23 +218,23 @@ class InstructionRType(Instruction):
         self.rs2 = (machinecode >> 20) & 0x1F
 
     def encode(self) -> int:
-        x = self._opcode | (self._funct3 << 12) | (self._funct7 << 25)
-        x |= (self.rd << 7) | (self.rs1 << 15) | (self.rs2 << 20)
-        return x
+        word = self.opcode | (self._funct3 << 12) | (self._funct7 << 25)
+        word |= (self.rd << 7) | (self.rs1 << 15) | (self.rs2 << 20)
+        return word
 
     def inopstr(self, model):
-        s = "{:>3}={}, ".format("x{}".format(self.rs1),
-                                model.state.intreg[self.rs1])
-        s += "{:>3}={} ".format("x{}".format(self.rs2),
-                                model.state.intreg[self.rs2])
-        return s
+        opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
+                                    model.state.intreg[self.rs1])
+        opstr += "{:>3}={} ".format("x{}".format(self.rs2),
+                                    model.state.intreg[self.rs2])
+        return opstr
 
     def outopstr(self, model):
         return "{:>3}={} ".format("x{}".format(self.rd),
                                   model.state.intreg[self.rd])
 
     def __str__(self):
-        return "{} x{}, x{}, x{}".format(self._mnemonic, self.rd, self.rs1,
+        return "{} x{}, x{}, x{}".format(self.mnemonic, self.rd, self.rs1,
                                          self.rs2)
 
     def __eq__(self, other):
@@ -156,7 +243,7 @@ class InstructionRType(Instruction):
         return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.rd == other.rd
 
 
-class InstructionIType(Instruction):
+class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
     """
     I-type instructions are registers that use one source register and an
     immediate to produce a new value for the destination register.
@@ -172,20 +259,26 @@ class InstructionIType(Instruction):
     :param imm: 12-bit signed immediate
     :type imm: int
     """
+
+    isa_format_id = "I"
+    asm_arg_signature = "<rd>, <rs1>, <imm>"
+
+    field_rd = Field(name="rd", base=7, size=5, description="")
+    field_rs1 = Field(name="rs1", base=15, size=5, description="")
+    field_imm = Field(name="imm", base=20, size=5, description="")
+
     def __init__(self, rd: int = None, rs1: int = None, imm: int = None):
         super(InstructionIType, self).__init__()
-        self.rd = rd
+        self.rd = rd  # pylint: disable=C0103
         self.rs1 = rs1
         self.imm = Immediate(bits=12, signed=True)
         if imm is not None:
             self.imm.set(imm)
 
-    def ops_from_string(self, ops):
-        ops = [op for op in ops.split(",")]
+    def ops_from_list(self, ops):
         self.rd = int(ops[0][1:])
         self.rs1 = int(ops[1][1:])
         self.imm.set(int(ops[2]))
-
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -197,30 +290,30 @@ class InstructionIType(Instruction):
         self.rs1 = (machinecode >> 15) & 0x1F
         self.imm.set_from_bits((machinecode >> 20) & 0xFFF)
 
-    def inopstr(self, model):
+    def inopstr(self, model) -> str:
         return "{:>3}={} ".format("x{}".format(self.rs1),
                                   model.state.intreg[self.rs1])
 
-    def outopstr(self, model):
+    def outopstr(self, model) -> str:
         return "{:>3}={} ".format("x{}".format(self.rd),
                                   model.state.intreg[self.rd])
 
     def encode(self) -> int:
-        x = self._opcode | (self._funct3 << 12)
-        x |= (self.rd << 7) | (self.rs1 << 15) | (self.imm.unsigned() << 20)
-        return x
+        code = self.opcode | (self._funct3 << 12)
+        code |= (self.rd << 7) | (self.rs1 << 15) | (self.imm.unsigned() << 20)
+        return code
 
-    def __str__(self):
-        return "{} x{}, x{}, {}".format(self._mnemonic, self.rd, self.rs1,
+    def __str__(self) -> str:
+        return "{} x{}, x{}, {}".format(self.mnemonic, self.rd, self.rs1,
                                         self.imm)
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if not super().__eq__(other):
             return False
         return self.rd == other.rd and self.rs1 == other.rs1 and self.imm == other.imm
 
 
-class InstructionILType(InstructionIType):
+class InstructionILType(InstructionIType, metaclass=ABCMeta):
     """
     I-type instruction specialization for stores. The produce a different
     assembler than the base class
@@ -233,14 +326,13 @@ class InstructionILType(InstructionIType):
     :type rs2: int
     """
     def __str__(self):
-        return "{} x{}, {}(x{})".format(self._mnemonic, self.rd, self.imm,
+        return "{} x{}, {}(x{})".format(self.mnemonic, self.rd, self.imm,
                                         self.rs1)
 
 
-class InstructionISType(InstructionIType):
+class InstructionISType(InstructionFunct3Type,InstructionFunct7Type, metaclass=ABCMeta):
     """
-    I-Type instruction specialization for shifts by immediate. The immediate
-    differs here (5-bit unsigned).
+    Similar to R-Type instruction specialization for shifts by immediate.
 
     :param rd: Destination register
     :type rd: int
@@ -249,14 +341,19 @@ class InstructionISType(InstructionIType):
     :param imm: 12-bit signed immediate
     :type imm: int
     """
+
+    field_rd = Field(name="rd", base=7, size=5, description="")
+    field_rs1 = Field(name="rs1", base=15, size=5, description="")
+    field_shamt = Field(name="shamt", base=20, size=5, description="")
+
     def __init__(self, rd: int = None, rs1: int = None, shamt: int = None):
         super(InstructionISType, self).__init__()
         self.rd = rd
         self.rs1 = rs1
-        self.shamt = Immediate(bits=5)
+        self.shamt = Immediate(bits=5, init=shamt)
 
     def ops_from_string(self, ops):
-        ops = [op for op in ops.split(",")]
+        ops = ops.split(",")
         self.rd = int(ops[0][1:])
         self.rs1 = int(ops[1][1:])
         self.shamt.set(int(ops[2]))
@@ -267,9 +364,10 @@ class InstructionISType(InstructionIType):
         self.shamt.set_from_bits((machinecode >> 20) & 0x1F)
 
     def encode(self) -> int:
-        x = self._opcode | (self._funct3 << 12) | (self._funct7 << 25)
-        x |= (self.rd << 7) | (self.rs1 << 15) | (self.shamt.unsigned() << 20)
-        return x
+        code = self.opcode | (self._funct3 << 12) | (self._funct7 << 25)
+        code |= (self.rd << 7) | (self.rs1 << 15) | (
+            self.shamt.unsigned() << 20)
+        return code
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
@@ -281,8 +379,8 @@ class InstructionISType(InstructionIType):
                                   model.state.intreg[self.rs1])
 
     def __str__(self):
-        return "{} x{}, x{}, 0x{:02x}".format(self._mnemonic, self.rd,
-                                              self.rs1, self.shamt)
+        return "{} x{}, x{}, 0x{:02x}".format(self.mnemonic, self.rd, self.rs1,
+                                              self.shamt)
 
     def __eq__(self, other):
         if not super().__eq__(other):
@@ -291,7 +389,7 @@ class InstructionISType(InstructionIType):
                 and self.shamt == other.shamt)
 
 
-class InstructionSType(Instruction):
+class InstructionSType(InstructionFunct3Type, metaclass=ABCMeta):
     """
     S-type instructions are used for stores. They don't have a destination
     register, but two source registers.
@@ -307,14 +405,12 @@ class InstructionSType(Instruction):
         super(InstructionSType, self).__init__()
         self.rs1 = rs1
         self.rs2 = rs2
-        self.imm = Immediate(bits=12, signed=True)
-        if imm is not None:
-            self.imm.set(imm)
+        self.imm = Immediate(bits=12, signed=True, init=imm)
 
     def ops_from_string(self, ops):
-        ops = [op for op in ops.split(",")]
+        ops = ops.split(",")
         self.rs1 = int(ops[0][1:])
-        self.rs2 = int(ops[1][ops[1].find("(")+2:-1])
+        self.rs2 = int(ops[1][ops[1].find("(") + 2:-1])
         self.imm.set(int(ops[1][0:ops[1].find("(")]))
 
     def randomize(self, variant: Variant):
@@ -332,20 +428,20 @@ class InstructionSType(Instruction):
     def encode(self) -> int:
         imm5 = self.imm.unsigned() & 0x1F
         imm7 = (self.imm.unsigned() >> 5) & 0x7F
-        x = self._opcode | (self._funct3 << 12) | (self.rs1 << 15) | (
+        code = self.opcode | (self._funct3 << 12) | (self.rs1 << 15) | (
             self.rs2 << 20)
-        x |= (imm7 << 25) | (imm5 << 7)
-        return x
+        code |= (imm7 << 25) | (imm5 << 7)
+        return code
 
     def inopstr(self, model):
-        s = "{:>3}={}, ".format("x{}".format(self.rs1),
-                                model.state.intreg[self.rs1])
-        s += "{:>3}={}".format("x{}".format(self.rs2),
-                               model.state.intreg[self.rs2])
-        return s
+        opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
+                                    model.state.intreg[self.rs1])
+        opstr += "{:>3}={}".format("x{}".format(self.rs2),
+                                   model.state.intreg[self.rs2])
+        return opstr
 
     def __str__(self):
-        return "{} x{}, {}(x{})".format(self._mnemonic, self.rs2, self.imm,
+        return "{} x{}, {}(x{})".format(self.mnemonic, self.rs2, self.imm,
                                         self.rs1)
 
     def __eq__(self, other):
@@ -354,7 +450,7 @@ class InstructionSType(Instruction):
         return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.imm == other.imm
 
 
-class InstructionBType(Instruction):
+class InstructionBType(InstructionFunct3Type, metaclass=ABCMeta):
     """
     B-type instructions encode branches. Branches have two source registers that
     are compared. They then change the program counter by the immediate value.
@@ -376,7 +472,7 @@ class InstructionBType(Instruction):
             self.imm.set(imm)
 
     def ops_from_string(self, ops):
-        ops = [op for op in ops.split(",")]
+        ops = ops.split(",")
         self.rs1 = int(ops[0][1:])
         self.rs2 = int(ops[1][1:])
         self.imm.set(int(ops[2]))
@@ -401,20 +497,21 @@ class InstructionBType(Instruction):
         imm11 = (self.imm.unsigned() >> 11) & 0x1
         imm1to4 = (self.imm.unsigned() >> 1) & 0xF
         imm5to10 = (self.imm.unsigned() >> 5) & 0x3F
-        x = self._opcode | (self._funct3 << 12) | (self.rs1 << 15) | (
+        code = self.opcode | (self._funct3 << 12) | (self.rs1 << 15) | (
             self.rs2 << 20)
-        x |= (imm12 << 31) | (imm5to10 << 25) | (imm1to4 << 8) | (imm11 << 7)
-        return x
+        code |= (imm12 << 31) | (imm5to10 << 25) | (imm1to4 << 8) | (
+            imm11 << 7)
+        return code
 
     def inopstr(self, model):
-        s = "{:>3}={}, ".format("x{}".format(self.rs1),
-                                model.state.intreg[self.rs1])
-        s += "{:>3}={}".format("x{}".format(self.rs2),
-                               model.state.intreg[self.rs2])
-        return s
+        opstr = "{:>3}={}, ".format("x{}".format(self.rs1),
+                                    model.state.intreg[self.rs1])
+        opstr += "{:>3}={}".format("x{}".format(self.rs2),
+                                   model.state.intreg[self.rs2])
+        return opstr
 
     def __str__(self):
-        return "{} x{}, x{}, .{:+}".format(self._mnemonic, self.rs1, self.rs2,
+        return "{} x{}, x{}, .{:+}".format(self.mnemonic, self.rs1, self.rs2,
                                            self.imm)
 
     def __eq__(self, other):
@@ -423,7 +520,7 @@ class InstructionBType(Instruction):
         return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.imm == other.imm
 
 
-class InstructionUType(Instruction):
+class InstructionUType(Instruction, metaclass=ABCMeta):
     """
     U-type instructions are used for constant formation and set the upper bits of a register.
 
@@ -434,14 +531,12 @@ class InstructionUType(Instruction):
     """
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionUType, self).__init__()
-        self.rd = rd
-        self.imm = Immediate(bits=20)
-        if imm is not None:
-            self.imm.set(imm)
+        self.rd = rd  # pylint: disable=invalid-name
+        self.imm = Immediate(bits=20, init=imm)
 
     def ops_from_string(self, ops):
-        ops = [op for op in ops.split(",")]
-        self.rs1 = int(ops[0][1:])
+        ops = ops.split(",")
+        self.rd = int(ops[0][1:])
         self.imm.set(int(ops[1]))
 
     def randomize(self, variant: Variant):
@@ -453,14 +548,14 @@ class InstructionUType(Instruction):
         self.imm.set_from_bits((machinecode >> 12) & 0xFFFFF)
 
     def encode(self):
-        return self._opcode | (self.rd << 7) | (self.imm.unsigned() << 12)
+        return self.opcode | (self.rd << 7) | (self.imm.unsigned() << 12)
 
     def outopstr(self, model):
         return "{:>3}={} ".format("x{}".format(self.rd),
                                   model.state.intreg[self.rd])
 
     def __str__(self):
-        return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
+        return "{} x{}, {}".format(self.mnemonic, self.rd, self.imm)
 
     def __eq__(self, other):
         if not super().__eq__(other):
@@ -468,7 +563,7 @@ class InstructionUType(Instruction):
         return self.rd == other.rd and self.imm == other.imm
 
 
-class InstructionJType(Instruction):
+class InstructionJType(Instruction, metaclass=ABCMeta):
     """
     J-type instruction are used for jump and link instructions.
 
@@ -479,7 +574,7 @@ class InstructionJType(Instruction):
     """
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionJType, self).__init__()
-        self.rd = rd
+        self.rd = rd  # pylint: disable=invalid-name
         self.imm = Immediate(bits=21, signed=True, lsb0=True)
         if imm is not None:
             self.imm.set(imm)
@@ -502,34 +597,41 @@ class InstructionJType(Instruction):
         imm12to19 = (self.imm.unsigned() >> 12) & 0xFF
         imm11 = (self.imm.unsigned() >> 11) & 0x1
         imm1to10 = (self.imm.unsigned() >> 1) & 0x3FF
-        x = self._opcode | (self.rd << 7)
-        x |= (imm20 << 31) | (imm1to10 << 21) | (imm11 << 20) | (
+        code = self.opcode | (self.rd << 7)
+        code |= (imm20 << 31) | (imm1to10 << 21) | (imm11 << 20) | (
             imm12to19 << 12)
-        return x
+        return code
 
     def outopstr(self, model):
         return "{:>3}={} ".format("x{}".format(self.rd),
                                   model.state.intreg[self.rd])
 
     def __str__(self):
-        return "{} x{}, .{:+}".format(self._mnemonic, self.rd, self.imm)
+        return "{} x{}, .{:+}".format(self.mnemonic, self.rd, self.imm)
 
     def __eq__(self, other):
         if not super().__eq__(other):
             return False
         return self.rd == other.rd and self.imm == other.imm
 
-
-class InstructionCType(Instruction):
+class InstructionCType(Instruction, metaclass=ABCMeta):
+    """
+    Compact instructions
+    """
     @abstractmethod
     def expand(self):
-        pass
+        """
+        Expand to full instruction
+        """
 
 
-class InstructionCBType(InstructionCType):
+class InstructionCBType(InstructionCType, metaclass=ABCMeta):
+    """
+    TODO: document
+    """
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionCBType, self).__init__()
-        self.rd = rd
+        self.rd = rd  # pylint: disable=invalid-name
         if self.rd is not None:
             self.rd = rd + 8
         self.imm = Immediate(bits=6, signed=True, lsb0=True)
@@ -540,14 +642,17 @@ class InstructionCBType(InstructionCType):
         self.rd = machinecode
 
     def __str__(self):
-        return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
+        return "{} x{}, {}".format(self.mnemonic, self.rd, self.imm)
 
 
-class InstructionCRType(InstructionCType):
+class InstructionCRType(InstructionCType, metaclass=ABCMeta):
+    """
+    TODO: document
+    """
     def __init__(self, rd: int = None, rs: int = None):
         super(InstructionCRType, self).__init__()
-        self.rd = rd
-        self.rs = rs
+        self.rd = rd  # pylint: disable=invalid-name
+        self.rs = rs  # pylint: disable=invalid-name
 
     def decode(self, machinecode: int):
         self.rd = (machinecode >> 7) & 0x1F
@@ -561,13 +666,16 @@ class InstructionCRType(InstructionCType):
         self.rs = randrange(8, 16)
 
     def __str__(self):
-        return "{} x{}, x{}".format(self._mnemonic, self.rd, self.rs)
+        return "{} x{}, x{}".format(self.mnemonic, self.rd, self.rs)
 
 
-class InstructionCIType(InstructionCType):
+class InstructionCIType(InstructionCType, metaclass=ABCMeta):
+    """
+    TODO: document
+    """
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionCIType, self).__init__()
-        self.rd = rd
+        self.rd = rd  # pylint: disable=invalid-name
         self.imm = Immediate(bits=6, signed=True, lsb0=True)
         if imm is not None:
             self.imm.set(imm)
@@ -583,22 +691,25 @@ class InstructionCIType(InstructionCType):
         self.imm.set_from_bits((imm12 << 5) | imm6to2)
 
     def __str__(self):
-        return "{} x{}, {}".format(self._mnemonic, self.rd, self.imm)
+        return "{} x{}, {}".format(self.mnemonic, self.rd, self.imm)
 
 
-class InstructionCSSType(InstructionCType):
+class InstructionCSSType(InstructionCType, metaclass=ABCMeta):
+    """
+    TODO: document
+    """
     def __init__(self, rs: int = None, imm: int = None):
         super(InstructionCSSType, self).__init__()
-        self.rs = rs
+        self.rs = rs  # pylint: disable=invalid-name
         self.imm = Immediate(bits=6, signed=True, lsb0=True)
         if imm is not None:
             self.imm.set(imm)
 
     def __str__(self):
-        return "{} x{}, {}(x2)".format(self._mnemonic, self.rs, self.imm)
+        return "{} x{}, {}(x2)".format(self.mnemonic, self.rs, self.imm)
 
     def randomize(self, variant: Variant):
-        self.rd = randrange(0, 16)
+        self.rs = randrange(0, 16)
         self.imm.randomize()
 
 
@@ -606,61 +717,59 @@ def isa(mnemonic: str,
         variant: Variant,
         *,
         opcode: int,
-        funct3: int = None,
-        funct7: int = None,
-        funct12: int = None):
+        **kwargs
+        ):
     """
     Decorator for the instructions. The decorator contains the static information for the
     instructions, in particular the encoding parameters and the assembler mnemonic.
 
     :param mnemonic: Assembler mnemonic
     :param opcode: Opcode of this instruction
-    :param funct3: 3 bit function code on bits 14 to 12 (R-, I-, S- and B-type)
-    :param funct7: 7 bit function code on bits 31 to 25 (R-type)
-    :param funct12: 12 bit function code on bits 31 to 20
     :return: Wrapper class that overwrites the actual definition and contains static data
     """
     def wrapper(wrapped):
         """Get wrapper"""
-        class WrappedClass(wrapped):
+        class WrappedClass(wrapped):  # pylint: disable=too-few-public-methods
             """Generic wrapper class"""
 
-            _mnemonic = mnemonic
-            _opcode = opcode
-            _funct3 = funct3
-            _funct7 = funct7
-            _funct12 = funct12
-            _variant = variant
+            wrapped.field_opcode = wrapped.field_opcode._replace(value=opcode)
 
-            @staticmethod
-            def _match(machinecode: int):
+            wrapped.mnemonic = mnemonic
+            wrapped.variant = variant
+
+            for field in kwargs:
+                fid = "field_"+field
+                assert fid in dir(wrapped), "Invalid field {} for {}".format(fid, wrapped.__name__)
+                setattr(wrapped, fid, getattr(wrapped, fid)._replace(value=kwargs[field]))
+
+            @classmethod
+            def match(cls, word: int):
                 """Try to match a machine code to this instruction"""
-                f3 = (machinecode >> 12) & 0x7
-                f7 = (machinecode >> 25) & 0x7F
-                f12 = (machinecode >> 20) & 0xFFF
-                if funct3 is not None and f3 != funct3:
+                if not cls.field_opcode:
                     return False
-                if funct7 is not None and f7 != funct7:
-                    return False
-                if funct12 is not None and f12 != funct12:
-                    return False
+
+                for field in cls.get_static_fields():
+                    if cls.extract_field(field.name, word) != field.value:
+                        return False
+
                 return True
 
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__
         WrappedClass.__qualname__ = wrapped.__qualname__
+        WrappedClass.__doc__ = wrapped.__doc__
         return WrappedClass
 
     return wrapper
 
 
-def isaC(mnemonic: str,
-         variant: Variant,
-         *,
-         opcode: int,
-         funct3=None,
-         funct4=None,
-         funct6=None):
+def isa_c(mnemonic: str,
+          variant: Variant,
+          *,
+          opcode: int,
+          funct3=None,
+          funct4=None,
+          funct6=None):
     """
     Decorator for the instructions. The decorator contains the static information for the
     instructions, in particular the encoding parameters and the assembler mnemonic.
@@ -670,45 +779,36 @@ def isaC(mnemonic: str,
     """
     def wrapper(wrapped):
         """Get wrapper"""
-        class WrappedClass(wrapped):
-            assert funct3 is not None or funct4 is not None or funct6 is not None
+        class WrappedClass(wrapped):  # pylint: disable=too-few-public-methods
             """Generic wrapper class"""
-            _mnemonic = mnemonic
-            _variant = variant
-            _opcode = opcode
 
-            @staticmethod
-            def _match(machinecode: int):
-                """Try to match a machine code to this instruction"""
-                opc = machinecode & 0x3
-                if opc != opcode:
-                    return False
-
-                f4 = (machinecode >> 12) & 0xF
-                f3 = (machinecode >> 13) & 0x7
-
-                if funct4 is not None and f4 != funct4:
-                    return False
-                if funct3 is not None and f3 != funct3:
-                    return False
-                return True
+            #TODO
 
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__
         WrappedClass.__qualname__ = wrapped.__qualname__
+        WrappedClass.__doc__ = wrapped.__doc__
         return WrappedClass
 
     return wrapper
 
 
 def isa_pseudo():
+    """
+    TODO: documentation
+    """
     def wrapper(wrapped):
-        class WrappedClass(wrapped):
+        class WrappedClass(wrapped):  # pylint: disable=too-few-public-methods
+            """
+            Wrapper class
+            """
+
             _pseudo = True
 
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__
         WrappedClass.__qualname__ = wrapped.__qualname__
+        WrappedClass.__doc__ = wrapped.__doc__
         return WrappedClass
 
     return wrapper
@@ -729,9 +829,9 @@ def get_insns(*, cls=None, variant: Variant = RV32I):
     if cls is None:
         cls = Instruction
 
-    if "_mnemonic" in cls.__dict__.keys() and cls._mnemonic:
+    if cls.mnemonic:
         # This filters out abstract classes
-        if variant is None or cls._variant <= variant:
+        if variant is None or cls.variant <= variant:
             insns = [cls]
 
     for subcls in cls.__subclasses__():
@@ -748,21 +848,25 @@ def reverse_lookup(mnemonic: str, variant: Variant = None):
     :return: :class:`Instruction` that matches or None
     """
     for i in get_insns(variant=variant):
-        if i._mnemonic == mnemonic:
+        if i.mnemonic == mnemonic:
             return i
 
     return None
 
 
-def get_mnenomics():
+def get_mnemomics():
     """
     Get all known mnemonics
 
     :return: List of all known mnemonics
     :rtype: List[str]
     """
-    return [i._mnemonic for i in get_insns()]
+    return [i.mnemonic for i in get_insns()]
 
 class TerminateException(Exception):
+    """
+    Exception that signal the termination of the program
+    """
     def __init__(self, returncode):
+        super().__init__()
         self.returncode = returncode

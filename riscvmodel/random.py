@@ -63,7 +63,7 @@ def gen_asm(argv=None):
         print(asm)
 
 def check_asm_run(N, pool, compiler, objcopy):
-    print("Check {} instructions from {}".format(N, [i._mnemonic for i in pool]))
+    print("Check {} instructions from {}".format(N, [i.mnemonic for i in pool]))
 
     scoreboard = []
 
@@ -83,18 +83,18 @@ def check_asm_run(N, pool, compiler, objcopy):
     j = 0
     for i in read_from_binary(binfile[1]):
         if str(i) != str(scoreboard[j]):
-            print("Check failed: {} {}".format(N, [i._mnemonic for i in pool]))
+            print("Check failed: {} {}".format(N, [i.mnemonic for i in pool]))
             print("{} != {}".format(i, scoreboard[j]))
             return
 
         j += 1
-    print("Check passed: {} {}".format(N, [i._mnemonic for i in pool]))
+    print("Check passed: {} {}".format(N, [i.mnemonic for i in pool]))
 
 
 def check_asm(argv=None):
     parser = argparse.ArgumentParser(description='Automatically test if sequences of assembler instructions compile.')
     parser.add_argument('N', nargs='?', default=100, type=int, help='Number of assembler instructions')
-    parser.add_argument('-i', action='append', type=str, choices=get_mnenomics(), help='Restrict to instructions')
+    parser.add_argument('-i', action='append', type=str, choices=get_mnemomics(), help='Restrict to instructions')
     parser.add_argument('-s', action='store_true', default=False, help='Test each mnemonic individually')
     parser.add_argument('--cc', type=str, default="riscv32-unknown-elf-gcc", help='Compiler executable')
     parser.add_argument('--objcopy', type=str, default="riscv32-unknown-elf-objcopy", help='objcopy executable')
@@ -105,7 +105,7 @@ def check_asm(argv=None):
     args = parser.parse_args(argv)
 
     if args.i is None:
-        args.i = get_mnenomics()
+        args.i = get_mnemomics()
 
     pool = [reverse_lookup(m) for m in args.i]
 

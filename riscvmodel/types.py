@@ -179,7 +179,6 @@ class Register(object):
 
     # todo: doesn't work
     def __cmp__(self, other):
-        print("cmp")
         return self.bits != other.bits or self.value != other.value
 
     def __and__(self, other):
@@ -329,7 +328,7 @@ class TracePC(Trace):
 class TraceRegister(Trace):
     def __init__(self, id, value):
         self.id = id
-        self.value = int(value)
+        self.value = value
 
     def __str__(self):
         return "{} = {}".format(self.id, self.value)

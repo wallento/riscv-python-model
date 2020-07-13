@@ -6,6 +6,8 @@ from .program import Program
 
 # todo: raise exception on memory misalignment
 class State(object):
+    single_regs = []
+
     def __init__(self, variant: Variant):
         self.variant = variant
         intregs = 32 if variant.baseint == "I" else 16
@@ -34,10 +36,13 @@ class State(object):
         self.pc.set(pc)
 
     def __setattr__(self, key, value):
-        if key == "pc" and "pc_update" in self.__dict__:
+        if key in self.single_regs and key in self.__dict__:
+            getattr(self, key).update(value)
+        elif key == "pc" and "pc_update" in self.__dict__:
             self.pc_update.set(value)
         else:
             super().__setattr__(key, value)
+
 
     def __str__(self):
         return "{}".format(self.intreg)
@@ -102,10 +107,11 @@ class Environment:
         pass
 
 class Model(object):
-    def __init__(self, variant: Variant, *, environment: Environment = None, verbose = False):
+    def __init__(self, variant: Variant, *, environment: Environment = None, verbose = False, asm_width=20):
         self.state = State(variant)
         self.environment = environment if environment is not None else Environment()
         self.verbose = verbose
+        self.asm_tpl = "{{:{}}} | [{{}}]".format(asm_width)
 
     def issue(self, insn):
         self.state.pc += 4
@@ -114,7 +120,7 @@ class Model(object):
 
         trace = self.state.changes()
         if self.verbose:
-            print("{:20} | [{}]".format(str(insn), ", ".join([str(t) for t in trace])))
+            print(self.asm_tpl.format(str(insn), ", ".join([str(t) for t in trace])))
         self.state.commit()
         return trace
 
