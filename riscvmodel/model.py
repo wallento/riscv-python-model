@@ -1,4 +1,5 @@
 from random import randrange
+import sys
 
 from .variant import *
 from .types import Register, RegisterFile, TracePC, TraceIntegerRegister, TraceMemory
@@ -111,7 +112,9 @@ class Model(object):
         self.state = State(variant)
         self.environment = environment if environment is not None else Environment()
         self.verbose = verbose
-        self.asm_tpl = "{{:{}}} | [{{}}]".format(asm_width)
+        if self.verbose is not False:
+            self.verbose_file = sys.stdout if verbose is True else open(self.verbose, "w")
+        self.asm_tpl = "{{:{}}} | [{{}}]\n".format(asm_width)
 
     def issue(self, insn):
         self.state.pc += 4
@@ -119,8 +122,8 @@ class Model(object):
         insn.execute(self)
 
         trace = self.state.changes()
-        if self.verbose:
-            print(self.asm_tpl.format(str(insn), ", ".join([str(t) for t in trace])))
+        if self.verbose is not False:
+            self.verbose_file.write(self.asm_tpl.format(str(insn), ", ".join([str(t) for t in trace])))
         self.state.commit()
         return trace
 
