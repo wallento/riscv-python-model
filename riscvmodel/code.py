@@ -6,24 +6,27 @@ from .insn import *
 from . import __version__
 
 class MachineDecodeError(Exception):
-    pass
+    def __init__(self, word):
+        self.word = word
+    def __str__(self):
+        return "Invalid instruction word: {:08x}".format(self.word)
 
-def decode(machinecode: int):
-    if machinecode & 0x3 != 3:
+def decode(word: int):
+    if word & 0x3 != 3:
         # compact
         for icls in get_insns(cls=InstructionCType):
-            if icls._match(machinecode):
+            if icls._match(word):
                 i = icls()
-                i.decode(machinecode)
+                i.decode(word)
                 return i
-        raise MachineDecodeError("Cannot decode {:04x}".format(machinecode))
-    opcode = machinecode & 0x7F
+        raise MachineDecodeError(word)
+    opcode = word & 0x7F
     for icls in get_insns():
-        if icls._opcode == opcode and icls._match(machinecode):
+        if icls.field_opcode.value == opcode and icls.match(word):
             i = icls()
-            i.decode(machinecode)
+            i.decode(word)
             return i
-    raise MachineDecodeError()
+    raise MachineDecodeError(word)
 
 
 def read_from_binary(fname: str, *, stoponerror: bool = False):

@@ -47,11 +47,19 @@ class Instruction(metaclass=ABCMeta):
         return signature
 
     @classmethod
-    def extract_field(cls, field, machinecode):
+    def extract_field(cls, field, word):
         fname = "field_{}".format(field)
         base = getattr(cls, fname).base
         size = getattr(cls, fname).size
-        return (machinecode >> base) & (2**size - 1)
+        if not isinstance(base, list):
+            base = [base]
+            size = [size]
+        off = 0
+        value = 0
+        for part in range(len(base)):
+            value |= ((word >> base[part]) & (2**size[part] - 1)) << off
+            off += size[part]
+        return value << getattr(cls, fname).offset
 
     @classmethod
     def set_field(cls, field, word, value):
@@ -61,7 +69,7 @@ class Instruction(metaclass=ABCMeta):
         if not isinstance(base, list):
             base = [base]
             size = [size]
-        off = 0
+        off = getattr(cls, fname).offset
         for part in range(len(base)):
             word |= (((value >> off) & (2**size[part] - 1)) << base[part])
             off += size[part]
@@ -81,6 +89,14 @@ class Instruction(metaclass=ABCMeta):
         if asdict:
             fields = [field._asdict() for field in fields]
         return {"id": cls.isa_format_id, "fields": fields}
+
+    @classmethod
+    def match(cls, word: int):
+        """Try to match a machine code to this instruction"""
+        for field in cls.get_static_fields():
+            if cls.extract_field(field.name, word) != field.value:
+                return False
+        return True
 
     def ops_from_string(self, ops: str):
         """
@@ -126,11 +142,13 @@ class Instruction(metaclass=ABCMeta):
                 assert self.extract_field(field.name, word) == field.value
             else:
                 attr = getattr(self, field.name)
+                value = self.extract_field(field.name, word)
                 if isinstance(attr, Register):
-                    attr.set(self.extract_field(field.name, word))
+                    attr.set(value)
+                elif isinstance(attr, Immediate):
+                    attr.set_from_bits(value)
                 else:
-                    assert isinstance(attr, Immediate)
-                    attr.set_from_bits(self.extract_field(field.name, word))
+                    setattr(self, field.name, value)
 
     def encode(self) -> int:
         """
@@ -661,18 +679,6 @@ def isa(mnemonic: str,
                 assert fid in dir(wrapped), "Invalid field {} for {}".format(fid, wrapped.__name__)
                 setattr(wrapped, fid, getattr(wrapped, fid)._replace(value=kwargs[field]))
 
-            @classmethod
-            def match(cls, word: int):
-                """Try to match a machine code to this instruction"""
-                if not cls.field_opcode:
-                    return False
-
-                for field in cls.get_static_fields():
-                    if cls.extract_field(field.name, word) != field.value:
-                        return False
-
-                return True
-
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__
         WrappedClass.__qualname__ = wrapped.__qualname__
@@ -700,8 +706,6 @@ def isa_c(mnemonic: str,
         """Get wrapper"""
         class WrappedClass(wrapped):  # pylint: disable=too-few-public-methods
             """Generic wrapper class"""
-
-            #TODO
 
         WrappedClass.__name__ = wrapped.__name__
         WrappedClass.__module__ = wrapped.__module__

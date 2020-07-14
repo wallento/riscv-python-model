@@ -26,7 +26,7 @@ class Simulator:
       except TerminateException as exc:
         assert exc.returncode == 0
         return cnt
-      except IndexError:
+      except IndexError as exc:
         return cnt
     return cnt
 
