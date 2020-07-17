@@ -11,7 +11,7 @@ class MachineDecodeError(Exception):
     def __str__(self):
         return "Invalid instruction word: {:08x}".format(self.word)
 
-def decode(word: int):
+def decode(word: int, variant: Variant=RV32I):
     if word & 0x3 != 3:
         # compact
         for icls in get_insns(cls=InstructionCType):
@@ -21,7 +21,7 @@ def decode(word: int):
                 return i
         raise MachineDecodeError(word)
     opcode = word & 0x7F
-    for icls in get_insns():
+    for icls in get_insns(variant=variant):
         if icls.field_opcode.value == opcode and icls.match(word):
             i = icls()
             i.decode(word)

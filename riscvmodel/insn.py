@@ -30,7 +30,7 @@ class InstructionAUIPC(InstructionUType):
 class InstructionJAL(InstructionJType):
     def execute(self, model: Model):
         model.state.intreg[self.rd] = model.state.pc + 4
-        model.state.pc = self.imm
+        model.state.pc += self.imm
 
 
 @isa("jalr", RV32I, opcode=0b1100111, funct3=0b000)

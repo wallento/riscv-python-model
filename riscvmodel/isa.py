@@ -265,11 +265,6 @@ class InstructionRType(InstructionFunct3Type, InstructionFunct7Type, metaclass=A
         return "{} x{}, x{}, x{}".format(self.mnemonic, self.rd, self.rs1,
                                          self.rs2)
 
-    def __eq__(self, other):
-        if not super().__eq__(other):
-            return False
-        return self.rs1 == other.rs1 and self.rs2 == other.rs2 and self.rd == other.rd
-
 
 class InstructionIType(InstructionFunct3Type, metaclass=ABCMeta):
     """
@@ -391,12 +386,6 @@ class InstructionISType(InstructionFunct3Type,InstructionFunct7Type, metaclass=A
     def __str__(self):
         return "{} x{}, x{}, 0x{:02x}".format(self.mnemonic, self.rd, self.rs1,
                                               self.shamt)
-
-    def __eq__(self, other):
-        if not super().__eq__(other):
-            return False
-        return (self.rd == other.rd and self.rs1 == other.rs1
-                and self.shamt == other.shamt)
 
 
 class InstructionSType(InstructionFunct3Type, metaclass=ABCMeta):
@@ -539,12 +528,20 @@ class InstructionJType(Instruction, metaclass=ABCMeta):
     :param imm: Immediate for the jump (21-bit, signed, 16-bit aligned)
     :type imm: int
     """
+
+    field_rd = Field(name="rd", base=7, size=5, description="")
+    field_imm = Field(name="imm", base=[21,20,12,31], size=[10,1,8,1], description="")
+
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionJType, self).__init__()
         self.rd = rd  # pylint: disable=invalid-name
         self.imm = Immediate(bits=21, signed=True, lsb0=True)
         if imm is not None:
             self.imm.set(imm)
+
+    def ops_from_list(self, ops):
+        self.rd = int(ops[0][1:])
+        self.imm.set(int(ops[1]))
 
     def randomize(self, variant: Variant):
         self.rd = randrange(0, variant.xlen)
