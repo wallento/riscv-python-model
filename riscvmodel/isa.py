@@ -740,14 +740,15 @@ def get_insns(*, cls=None, variant: Variant = RV32I):
     if cls is None:
         cls = Instruction
 
+    # This filters out abstract classes
     if cls.mnemonic:
-        # This filters out abstract classes
         if variant is None or cls.variant <= variant:
             insns = [cls]
 
     for subcls in cls.__subclasses__():
         insns += get_insns(cls=subcls, variant=variant)
 
+    insns = list(dict.fromkeys(insns)) # Remove duplicates
     return insns
 
 
