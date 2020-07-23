@@ -662,26 +662,17 @@ def isa(mnemonic: str,
     :return: Wrapper class that overwrites the actual definition and contains static data
     """
     def wrapper(wrapped):
-        """Get wrapper"""
-        class WrappedClass(wrapped):  # pylint: disable=too-few-public-methods
-            """Generic wrapper class"""
+        wrapped.field_opcode = wrapped.field_opcode._replace(value=opcode)
 
-            wrapped.field_opcode = wrapped.field_opcode._replace(value=opcode)
+        wrapped.mnemonic = mnemonic
+        wrapped.variant = variant
 
-            wrapped.mnemonic = mnemonic
-            wrapped.variant = variant
+        for field in kwargs:
+            fid = "field_"+field
+            assert fid in dir(wrapped), "Invalid field {} for {}".format(fid, wrapped.__name__)
+            setattr(wrapped, fid, getattr(wrapped, fid)._replace(value=kwargs[field]))
 
-            for field in kwargs:
-                fid = "field_"+field
-                assert fid in dir(wrapped), "Invalid field {} for {}".format(fid, wrapped.__name__)
-                setattr(wrapped, fid, getattr(wrapped, fid)._replace(value=kwargs[field]))
-
-        WrappedClass.__name__ = wrapped.__name__
-        WrappedClass.__module__ = wrapped.__module__
-        WrappedClass.__qualname__ = wrapped.__qualname__
-        WrappedClass.__doc__ = wrapped.__doc__
-        return WrappedClass
-
+        return wrapped
     return wrapper
 
 
