@@ -313,6 +313,45 @@ class SingleRegister(object):
         self.update(self.reg.value + other)
         return self.reg
 
+class BitflagRegister():
+    def __init__(self, flags: list, *, prefix=""):
+        assert isinstance(flags, list) and len(flags) > 0
+        super().__setattr__("flags", flags)
+        self.prefix = prefix
+        for flag in flags:
+            super().__setattr__(flag, 0)
+            super().__setattr__(flag+"_update", None)
+    def __setattr__(self, name, value):
+        if name in self.flags:
+            super().__setattr__(name+"_update", value)
+        else:
+            super().__setattr__(name, value)
+
+    def set(self, value):
+        for flag in value:
+            assert flag in self.flags
+            setattr(self, flag, value[flag])
+
+    def get(self, flag):
+        assert flag in self.flags
+        return getattr(self, flag)
+
+    def changes(self):
+        changes = []
+        for flag in self.flags:
+            upd = getattr(self, flag+"_update")
+            if upd is not None:
+                changes.append(TraceRegister(self.prefix+flag, upd))
+        return changes
+
+    def commit(self):
+        for flag in self.flags:
+            upd = getattr(self, flag+"_update")
+            if upd is not None:
+                super().__setattr__(flag, upd)
+                super().__setattr__(flag+"_update", None)
+
+
 class Trace(object):
     pass
 
