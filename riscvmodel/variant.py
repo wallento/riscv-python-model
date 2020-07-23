@@ -58,10 +58,10 @@ class Variant:
             for ext in match.group(4).split("_"):
                 if ext[0] == "Z":
                     self.extensions |= set(
-                        [ext] + Variant.stdextZ["Z" + ext[1:].lower()].implies)
+                        [ext[0]+ext[1:].lower()] + Variant.stdextZ["Z" + ext[1:].lower()].implies)
                 elif ext[0] == "X":
                     self.extensions |= set(
-                        [ext] + self.custext["X" + ext[1:].lower()].implies)
+                        [ext[0]+ext[1:].lower()] + self.custext["X" + ext[1:].lower()].implies)
 
     def __str__(self):
         return self.name
