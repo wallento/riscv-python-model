@@ -481,3 +481,91 @@ class InstructionCMV(InstructionCRType):
 
     def execute(self, model: Model):
         model.state.intreg[self.rd] = model.state.intreg[self.rs]
+
+
+@isa("lr", RV32A, opcode=0b0101111, funct7=0b0001011, funct3=0b010)
+class InstructionLR(InstructionRType):
+    """ Load reserved """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("sc", RV32A, opcode=0b0101111, funct7=0b0001111, funct3=0b010)
+class InstructionSC(InstructionRType):
+    """ Store conditional """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amoadd", RV32A, opcode=0b0101111, funct5=0b00000, funct3=0b010)
+class InstructionAMOADD(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amoxor", RV32A, opcode=0b0101111, funct5=0b00100, funct3=0b010)
+class InstructionAMOXOR(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amoor",   RV32A, opcode=0b0101111, funct5=0b01000, funct3=0b010)
+class InstructionAMOOR(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amoand", RV32A, opcode=0b0101111, funct5=0b01100, funct3=0b010)
+class InstructionAMOAND(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amomin", RV32A, opcode=0b0101111, funct5=0b10000, funct3=0b010)
+class InstructionAMOMIN(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amomax", RV32A, opcode=0b0101111, funct5=0b10100, funct3=0b010)
+class InstructionAMOMAX(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amominu", RV32A, opcode=0b0101111, funct5=0b11000, funct3=0b010)
+class InstructionAMOMINU(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amomaxu", RV32A, opcode=0b0101111, funct5=0b11100, funct3=0b010)
+class InstructionAMOMAXU(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("amoswap", RV32A, opcode=0b0101111, funct5=0b00001, funct3=0b010)
+class InstructionAMOSWAP(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
