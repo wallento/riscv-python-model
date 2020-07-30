@@ -483,16 +483,16 @@ class InstructionCMV(InstructionCRType):
         model.state.intreg[self.rd] = model.state.intreg[self.rs]
 
 
-@isa("lr", RV32A, opcode=0b0101111, funct7=0b0001011, funct3=0b010)
-class InstructionLR(InstructionRType):
+@isa("lr", RV32A, opcode=0b0101111, funct5=0b00010, funct3=0b010)
+class InstructionLR(InstructionAMOType):
     """ Load reserved """
     def execute(self, model: Model):
         # TODO: implement
         pass
 
 
-@isa("sc", RV32A, opcode=0b0101111, funct7=0b0001111, funct3=0b010)
-class InstructionSC(InstructionRType):
+@isa("sc", RV32A, opcode=0b0101111, funct5=0b00011, funct3=0b010)
+class InstructionSC(InstructionAMOType):
     """ Store conditional """
     def execute(self, model: Model):
         # TODO: implement
