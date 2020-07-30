@@ -851,10 +851,3 @@ def get_mnemomics():
     """
     return [i.mnemonic for i in get_insns()]
 
-class TerminateException(Exception):
-    """
-    Exception that signal the termination of the program
-    """
-    def __init__(self, returncode):
-        super().__init__()
-        self.returncode = returncode

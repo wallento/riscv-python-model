@@ -1,4 +1,5 @@
 from riscvmodel.isa import *
+from riscvmodel.insn import *
 from riscvmodel.regnames import *
 from riscvmodel.program import Program
 
