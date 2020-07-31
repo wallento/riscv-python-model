@@ -299,6 +299,38 @@ class InstructionECALL(InstructionIType):
         return "ecall"
 
 
+@isa("uret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000000000010, rs1=0b00000, rd=0b00000)
+class InstructionURET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("sret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000100000010, rs1=0b00000, rd=0b00000)
+class InstructionSRET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("hret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b001000000010, rs1=0b00000, rd=0b00000)
+class InstructionHRET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("mret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b001100000010, rs1=0b00000, rd=0b00000)
+class InstructionMRET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
 @isa("wfi", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000100000101, rs1=0b00000, rd=0b00000)
 class InstructionWFI(InstructionIType):
     def execute(self, model: Model):
