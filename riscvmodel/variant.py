@@ -28,7 +28,7 @@ class Variant:
         "Zifencei": Extension("Zifencei", "Instruction-Fetch Fence", [])
     }
     regex = re.compile(
-        r"^RV(32|64|128)(I|E|G)({})*((?:(?:Z|X).+)(?:_(?:(?:Z|X).*))*)?$".
+        r"^RV(32|64|128)(A|I|E|G)({})*((?:(?:Z|X).+)(?:_(?:(?:Z|X).*))*)?$".
         format("|".join(list(stdext.keys()) + ["G"])))
     G_expand = ["I", "M", "A", "F", "D", "Zicsr", "Zifencei"]
 
@@ -133,6 +133,7 @@ RV64I = Variant("RV64I")
 RV64G = Variant("RV64G")
 RV64GC = Variant("RV64GC")
 RV128I = Variant("RV128I")
+RV32A = Variant("RV32A")
 
 
 def describe_argparser():

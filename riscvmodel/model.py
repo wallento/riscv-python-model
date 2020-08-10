@@ -5,6 +5,14 @@ from .variant import *
 from .types import Register, RegisterFile, TracePC, TraceIntegerRegister, TraceMemory
 from .program import Program
 
+class TerminateException(Exception):
+    """
+    Exception that signal the termination of the program
+    """
+    def __init__(self, returncode):
+        super().__init__()
+        self.returncode = returncode
+
 # todo: raise exception on memory misalignment
 class State(object):
     single_regs = []
@@ -17,6 +25,8 @@ class State(object):
         self.pc_update = Register(32)
         self.memory = Memory()
         self.initialized = True
+        # Used for tracking atomic accesses
+        self.reservations = []
 
     def randomize(self):
         self.intreg.randomize()
@@ -44,10 +54,19 @@ class State(object):
         else:
             super().__setattr__(key, value)
 
-
     def __str__(self):
         return "{}".format(self.intreg)
 
+    def atomic_acquire(self, address):
+        if not address in self.reservations:
+            self.reservations.append(address)
+
+    def atomic_release(self, address):
+        if address in self.reservations:
+            self.reservations.remove(address)
+
+    def atomic_reserved(self, address):
+        return address in self.reservations
 
 class Memory(object):
     def __init__(self, *, base: int = 0, size: int = 2^32):

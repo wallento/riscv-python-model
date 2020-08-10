@@ -212,6 +212,9 @@ class Instruction(metaclass=ABCMeta):
 class InstructionFunct3Type(Instruction, metaclass=ABCMeta):
     field_funct3 = Field(name="funct3", base=12, size=3, description="", static=True)
 
+class InstructionFunct5Type(Instruction, metaclass=ABCMeta):
+    field_funct5 = Field(name="funct5", base=27, size=5, description="", static=True)
+
 class InstructionFunct7Type(Instruction, metaclass=ABCMeta):
     field_funct7 = Field(name="funct7", base=25, size=7, description="", static=True)
 
@@ -647,6 +650,79 @@ class InstructionCSSType(InstructionCType, metaclass=ABCMeta):
         self.imm.randomize()
 
 
+class InstructionAMOType(InstructionFunct3Type, InstructionFunct5Type, metaclass=ABCMeta):
+    """
+    AMO-type instructions used a modified version of the R-type instruction.
+    These are also 3-register instructions (use 2 source, write 1 output) but
+    have additional flags for controlling acquisition (aq) and release (rl) of
+    locks on target addresses.
+
+    :param rd: Destination register
+    :type rd: int
+    :param rs1: Source register 1
+    :type rs1: int
+    :param rs2: Source register 2
+    :type rs2: int
+    :param rl: Lock release flag
+    :type rl: int
+    :param aq: Lock acquisition flag
+    :type aq: int
+    """
+
+    isa_format_id     = "R"
+    asm_arg_signature = "<rd>, <rs1>, <rs2>, <rl>, <aq>"
+
+    field_rd  = Field(name="rd", base=7, size=5, description="")
+    field_rs1 = Field(name="rs1", base=15, size=5, description="")
+    field_rs2 = Field(name="rs2", base=20, size=5, description="")
+    field_rl  = Field(name="rl",  base=25, size=1, description="Lock release")
+    field_aq  = Field(name="aq",  base=26, size=1, description="Lock acquire")
+
+    def __init__(
+        self,
+        rd: int = None,
+        rs1: int = None,
+        rs2: int = None,
+        rl: int = None,
+        aq: int = None,
+    ):
+        super(InstructionAMOType, self).__init__()
+        self.rd  = rd
+        self.rs1 = rs1
+        self.rs2 = rs2
+        self.rl  = rl
+        self.aq  = aq
+
+    def ops_from_list(self, ops):
+        (self.rd, self.rs1, self.rs2, self.rl, self.aq) = [int(op[1:]) for ops in ops]
+
+    def randomize(self, variant: Variant):
+        self.rd  = randrange(0, variant.xlen)
+        self.rs1 = randrange(0, variant.xlen)
+        self.rs2 = randrange(0, variant.xlen)
+        self.rl  = randrange(0, variant.xlen)
+        self.aq  = randrange(0, variant.xlen)
+
+    def inopstr(self, model):
+        opstr = "{:>3}={}, ".format(
+            "x{}".format(self.rs1), model.state.intreg[self.rs1]
+        )
+        opstr += "{:>3}={} ".format(
+            "x{}".format(self.rs2), model.state.intreg[self.rs2]
+        )
+        return opstr
+
+    def outopstr(self, model):
+        return "{:>3}={} ".format(
+            "x{}".format(self.rd), model.state.intreg[self.rd]
+        )
+
+    def __str__(self):
+        return "{} x{}, x{}, x{}, {}, {}".format(
+            self.mnemonic, self.rd, self.rs1, self.rs2, self.rl, self.aq
+        )
+
+
 def isa(mnemonic: str,
         variant: Variant,
         *,
@@ -775,10 +851,3 @@ def get_mnemomics():
     """
     return [i.mnemonic for i in get_insns()]
 
-class TerminateException(Exception):
-    """
-    Exception that signal the termination of the program
-    """
-    def __init__(self, returncode):
-        super().__init__()
-        self.returncode = returncode

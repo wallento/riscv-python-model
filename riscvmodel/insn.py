@@ -299,6 +299,38 @@ class InstructionECALL(InstructionIType):
         return "ecall"
 
 
+@isa("uret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000000000010, rs1=0b00000, rd=0b00000)
+class InstructionURET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("sret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000100000010, rs1=0b00000, rd=0b00000)
+class InstructionSRET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("hret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b001000000010, rs1=0b00000, rd=0b00000)
+class InstructionHRET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
+@isa("mret", RV32I, opcode=0b1110011, funct3=0b000, imm=0b001100000010, rs1=0b00000, rd=0b00000)
+class InstructionMRET(InstructionIType):
+    """ Machine level exception return """
+    def execute(self, model: Model):
+        # TODO: implement
+        pass
+
+
 @isa("wfi", RV32I, opcode=0b1110011, funct3=0b000, imm=0b000100000101, rs1=0b00000, rd=0b00000)
 class InstructionWFI(InstructionIType):
     def execute(self, model: Model):
@@ -481,3 +513,192 @@ class InstructionCMV(InstructionCRType):
 
     def execute(self, model: Model):
         model.state.intreg[self.rd] = model.state.intreg[self.rs]
+
+
+@isa("lr", RV32A, opcode=0b0101111, funct5=0b00010, funct3=0b010)
+class InstructionLR(InstructionAMOType):
+    """ Load reserved """
+    def execute(self, model: Model):
+        # Perform a normal load
+        data = model.state.memory.lw(model.state.intreg[self.rs1].unsigned())
+        model.state.intreg[self.rd] = data
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("sc", RV32A, opcode=0b0101111, funct5=0b00011, funct3=0b010)
+class InstructionSC(InstructionAMOType):
+    """ Store conditional """
+    def execute(self, model: Model):
+        # Check if this address is reserved
+        if model.state.atomic_reserved(model.state.intreg[self.rs1]):
+            model.state.memory.sw(
+                model.state.intreg[self.rs1].unsigned(),
+                model.state.intreg[self.rs2]
+            )
+            model.state.intreg[self.rd] = 0
+        else:
+            model.state.intreg[self.rd] = 1
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amoadd", RV32A, opcode=0b0101111, funct5=0b00000, funct3=0b010)
+class InstructionAMOADD(InstructionAMOType):
+    """ Atomic add operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            (model.state.intreg[self.rs2] + model.state.intreg[self.rd])
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amoxor", RV32A, opcode=0b0101111, funct5=0b00100, funct3=0b010)
+class InstructionAMOXOR(InstructionAMOType):
+    """ Atomic XOR operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            (model.state.intreg[self.rs2] ^ model.state.intreg[self.rd])
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amoor",   RV32A, opcode=0b0101111, funct5=0b01000, funct3=0b010)
+class InstructionAMOOR(InstructionAMOType):
+    """ Atomic OR operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            (model.state.intreg[self.rs2] | model.state.intreg[self.rd])
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amoand", RV32A, opcode=0b0101111, funct5=0b01100, funct3=0b010)
+class InstructionAMOAND(InstructionAMOType):
+    """ Atomic AND operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            (model.state.intreg[self.rs2] & model.state.intreg[self.rd])
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amomin", RV32A, opcode=0b0101111, funct5=0b10000, funct3=0b010)
+class InstructionAMOMIN(InstructionAMOType):
+    """ Atomic minimum operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            min(model.state.intreg[self.rs2], model.state.intreg[self.rd])
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amomax", RV32A, opcode=0b0101111, funct5=0b10100, funct3=0b010)
+class InstructionAMOMAX(InstructionAMOType):
+    """ Atomic maximum operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            max(model.state.intreg[self.rs2], model.state.intreg[self.rd])
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amominu", RV32A, opcode=0b0101111, funct5=0b11000, funct3=0b010)
+class InstructionAMOMINU(InstructionAMOType):
+    """ Atomic unsigned minimum operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            min(
+                model.state.intreg[self.rs2].unsigned(),
+                model.state.intreg[self.rd].unsigned()
+            )
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amomaxu", RV32A, opcode=0b0101111, funct5=0b11100, funct3=0b010)
+class InstructionAMOMAXU(InstructionAMOType):
+    """ Atomic unsigned maximum operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            max(
+                model.state.intreg[self.rs2].unsigned(),
+                model.state.intreg[self.rd].unsigned()
+            )
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
+
+
+@isa("amoswap", RV32A, opcode=0b0101111, funct5=0b00001, funct3=0b010)
+class InstructionAMOSWAP(InstructionAMOType):
+    """ Atomic swap operation """
+    def execute(self, model: Model):
+        # This models a single HART with 1 stage pipeline, so will always succeed
+        model.state.intreg[self.rd] = model.state.memory.lw(
+            model.state.intreg[self.rs1].unsigned()
+        )
+        model.state.memory.sw(
+            model.state.intreg[self.rs1].unsigned(),
+            model.state.intreg[self.rs2]
+        )
+        # Perform correct lock or release actions
+        if self.rl: model.state.atomic_release(model.state.intreg[self.rs1])
+        elif self.aq: model.state.atomic_acquire(model.state.intreg[self.rs1])
