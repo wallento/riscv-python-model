@@ -253,15 +253,23 @@ class InstructionXOR(InstructionRType):
 @isa("srl", RV32I, opcode=0b0110011, funct3=0b101, funct7=0b0000000)
 class InstructionSRL(InstructionRType):
     def execute(self, model: Model):
-        model.state.intreg[
-            self.rd] = model.state.intreg[self.rs1] >> model.state.intreg[self.rs2]
+        src = model.state.intreg[self.rs1]
+        shift = model.state.intreg[self.rs2] & 0x1f
+        model.state.intreg[self.rd] = src >> shift
 
 
 @isa("sra", RV32I, opcode=0b0110011, funct3=0b101, funct7=0b0100000)
 class InstructionSRA(InstructionRType):
     def execute(self, model: Model):
-        model.state.intreg[
-            self.rd] = model.state.intreg[self.rs1] >> model.state.intreg[self.rs2]
+        usrc = model.state.intreg[self.rs1].unsigned()
+        shift = model.state.intreg[self.rs2].unsigned() & 0x1f
+        if usrc >> 31:
+            to_clear = 32 - shift
+            sign_mask = (((1 << 32) - 1) >> to_clear) << to_clear
+        else:
+            sign_mask = 0
+
+        model.state.intreg[self.rd] = sign_mask | (usrc >> shift)
 
 
 @isa("or", RV32I, opcode=0b0110011, funct3=0b110, funct7=0b0000000)
