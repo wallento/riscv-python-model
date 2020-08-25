@@ -1,5 +1,4 @@
-from .model import Model, Memory
-from .isa import TerminateException
+from .model import Model, Memory, TerminateException
 
 import struct
 
