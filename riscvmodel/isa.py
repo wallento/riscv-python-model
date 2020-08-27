@@ -533,7 +533,7 @@ class InstructionJType(Instruction, metaclass=ABCMeta):
     """
 
     field_rd = Field(name="rd", base=7, size=5, description="")
-    field_imm = Field(name="imm", base=[21,20,12,31], size=[10,1,8,1], description="")
+    field_imm = Field(name="imm", base=[21,20,12,31], size=[10,1,8,1], description="", offset=1)
 
     def __init__(self, rd: int = None, imm: int = None):
         super(InstructionJType, self).__init__()
