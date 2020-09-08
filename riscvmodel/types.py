@@ -164,6 +164,25 @@ class Register(object):
     def unsigned(self):
         return self.value & self.mask
 
+    def bytes_little_endian(self) -> bytes:
+        '''Get the bytes of this register in little-endian format
+
+        Assumes that self.bits is a multiple of 8.
+
+        '''
+        assert 0 == self.bits & 7
+        uval = self.unsigned()
+        return bytes((uval >> (8 * idx)) & 255
+                     for idx in range(self.bits // 8))
+
+    def bytes_big_endian(self) -> bytes:
+        '''Get the bytes of this register in big-endian format
+
+        Assumes that self.bits is a multiple of 8.
+
+        '''
+        return bytes(reversed(self.bytes_little_endian()))
+
     def __str__(self):
         return self.format.format(self.value & self.mask)
 
