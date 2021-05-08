@@ -457,7 +457,7 @@ class InstructionBType(InstructionFunct3Type, metaclass=ABCMeta):
 
     field_rs1 = Field(name="rs1", base=15, size=5, description="")
     field_rs2 = Field(name="rs2", base=20, size=5, description="")
-    field_imm = Field(name="imm", base=[7, 25], size=[5, 7], offset=1, description="")
+    field_imm = Field(name="imm", base=[8, 25, 7, 31], size=[4, 6, 1, 1], offset=1, description="")
 
     asm_arg_signature = "<rs1>, <rs2>, <imm>"
 
