@@ -8,7 +8,6 @@ from .insn import *
 from .isa import get_insns
 from .variant import Variant, RV32I
 from .code import read_from_binary
-from .model import Model
 from . import __version__
 
 

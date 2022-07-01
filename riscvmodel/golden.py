@@ -3,7 +3,7 @@ from collections import deque
 
 from .variant import Variant
 from .model import Model, Memory
-from .isa import InstructionNOP
+from .insn import InstructionNOP
 from .program import Program
 from .types import RVFISignals, TraceIntegerRegister, Register
 from .code import decode
@@ -66,8 +66,8 @@ class GoldenUnbuffered(Golden):
         # Execute the expected instruction and verify the state is the same
         exp_trace = self.model.issue(exp)
         if not self.model.check(trace):
-            raise GoldenException("Unexpected state change: {}, expected: {}".format(",".join([str(t) for t in trace]),
-                                                                                     ",".join([str(t) for t in exp_trace])))
+            raise GoldenException("Unexpected state change: {}, expected: {}, insn: {}".format(",".join([str(t) for t in trace]),
+                                                                                          ",".join([str(t) for t in exp_trace]), insn))
 
     def reset(self, *, pc: int = 0):
         self.model.reset(pc=pc)

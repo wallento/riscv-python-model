@@ -203,7 +203,7 @@ class InstructionSRLI(InstructionISType):
 @isa("srai", RV32I, opcode=0b0010011, funct3=0b101, funct7=0b0100000)
 class InstructionSRAI(InstructionISType):
     def execute(self, model: Model):
-        model.state.intreg[self.rd] = model.state.intreg[self.rs1] >> self.shamt
+        model.state.intreg[self.rd] = model.state.intreg[self.rs1] >> int(self.shamt)
 
 
 @isa("add", RV32I, opcode=0b0110011, funct3=0b000, funct7=0b0000000)

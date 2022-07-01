@@ -226,7 +226,7 @@ class Register(object):
 
     def __rshift__(self, other):
         new = Register(self.bits)
-        value = (self.value + 2**self.bits) if self.value < 0 else self.value
+        value = self.value
         if isinstance(other, int):
             new.set(value >> other)
         elif isinstance(other, (Register, Immediate)):

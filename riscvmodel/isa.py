@@ -202,10 +202,10 @@ class Instruction(metaclass=ABCMeta):
     def __eq__(self, other):
         for field in self.get_fields():
             if field.static:
-                if getattr(self, field) != getattr(other, field):
+                if getattr(self, f"field_{field.name}") != getattr(other, f"field_{field.name}"):
                     return False
             else:
-                if getattr(self, field[6:]) != getattr(other, field[6:]):
+                if getattr(self, field.name) != getattr(other, field.name):
                     return False
         return True
 
