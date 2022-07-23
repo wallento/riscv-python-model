@@ -163,7 +163,7 @@ class InstructionSLTI(InstructionIType):
 @isa("sltiu", RV32I, opcode=0b0010011, funct3=0b011)
 class InstructionSLTIU(InstructionIType):
     def execute(self, model: Model):
-        if model.state.intreg[self.rs1].unsigned() < int(self.imm):
+        if model.state.intreg[self.rs1].unsigned() < int(self.imm) & 0xFFFFFFFF:
             model.state.intreg[self.rd] = 1
         else:
             model.state.intreg[self.rd] = 0
@@ -203,7 +203,7 @@ class InstructionSRLI(InstructionISType):
 @isa("srai", RV32I, opcode=0b0010011, funct3=0b101, funct7=0b0100000)
 class InstructionSRAI(InstructionISType):
     def execute(self, model: Model):
-        model.state.intreg[self.rd] = model.state.intreg[self.rs1] >> self.shamt
+        model.state.intreg[self.rd] = (model.state.intreg[self.rs1] & 0xFFFFFFFF) >> self.shamt
 
 
 @isa("add", RV32I, opcode=0b0110011, funct3=0b000, funct7=0b0000000)
@@ -236,12 +236,12 @@ class InstructionSLT(InstructionRType):
 
 @isa("sltu", RV32I, opcode=0b0110011, funct3=0b011, funct7=0b0000000)
 class InstructionSLTU(InstructionRType):
-    def execute(self, state: State):
-        if state.intreg[self.rs1].unsigned() < state.intreg[
+    def execute(self, model: Model):
+        if model.state.intreg[self.rs1].unsigned() < model.state.intreg[
                 self.rs2].unsigned():
-            state.intreg[self.rd] = 1
+            model.state.intreg[self.rd] = 1
         else:
-            state.intreg[self.rd] = 0
+            model.state.intreg[self.rd] = 0
 
 
 @isa("xor", RV32I, opcode=0b0110011, funct3=0b100, funct7=0b0000000)
@@ -253,8 +253,8 @@ class InstructionXOR(InstructionRType):
 @isa("srl", RV32I, opcode=0b0110011, funct3=0b101, funct7=0b0000000)
 class InstructionSRL(InstructionRType):
     def execute(self, model: Model):
-        src = model.state.intreg[self.rs1]
-        shift = model.state.intreg[self.rs2] & 0x1f
+        src = model.state.intreg[self.rs1].unsigned()
+        shift = int(model.state.intreg[self.rs2] & 0x1f)
         model.state.intreg[self.rd] = src >> shift
 
 

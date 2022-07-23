@@ -226,11 +226,10 @@ class Register(object):
 
     def __rshift__(self, other):
         new = Register(self.bits)
-        value = (self.value + 2**self.bits) if self.value < 0 else self.value
         if isinstance(other, int):
-            new.set(value >> other)
+            new.set(self.value >> other)
         elif isinstance(other, (Register, Immediate)):
-            new.set(value >> other.value)
+            new.set(self.value >> other.value)
         else:
             raise TypeError("unsupported operand type for Register >>: {}".format(other.__class__))
         return new
